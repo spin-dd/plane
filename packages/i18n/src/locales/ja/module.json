@@ -1,7 +1,7 @@
 {
   "module": {
-    "label": "{count, plural, one {モジュール} other {モジュール}}",
-    "no_module": "モジュールなし",
-    "select": "モジュールを追加"
+    "label": "{count, plural, one {工種} other {工種}}",
+    "no_module": "工種なし",
+    "select": "工種を追加"
   }
 }
