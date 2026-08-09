@@ -1,0 +1,62 @@
+##
+## spin-dd fork 固有の CI ガード。upstream には存在しない新規ファイル。
+## ルールの根拠は CONTRIBUTING.spindd.md を参照。
+##
+name: spindd Fork Guard
+
+on:
+  pull_request:
+    branches: [spindd]
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    name: Check fork customization rules
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Collect changed files
+        id: changes
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch --no-tags origin "+refs/heads/$BASE_REF:refs/remotes/origin/$BASE_REF"
+          git diff --name-only --diff-filter=A "origin/$BASE_REF...HEAD" > /tmp/added.txt
+          git diff --name-only "origin/$BASE_REF...HEAD" > /tmp/changed.txt
+          echo "--- added ---"; cat /tmp/added.txt
+          echo "--- changed ---"; cat /tmp/changed.txt
+
+      # upstream 追従 PR は新しいマイグレーションを正当に持ち込むため除外する。
+      - name: Guard against plane.db migrations
+        if: ${{ !startsWith(github.head_ref, 'sync/') }}
+        run: |
+          hits=$(grep -E '^apps/api/plane/db/migrations/[^/]+\.py$' /tmp/added.txt | grep -v '__init__.py' || true)
+          if [ -n "$hits" ]; then
+            echo "$hits" | while read -r f; do
+              echo "::error file=$f::apps/api/plane/db/migrations/ にマイグレーションを追加できません。upstream の連番と leaf node が衝突します。独自モデルは別 Django アプリに隔離してください（CONTRIBUTING.spindd.md §4）。"
+            done
+            exit 1
+          fi
+          echo "OK: plane.db に新規マイグレーションはありません。"
+
+      - name: Warn on upstream-owned file edits
+        if: ${{ !startsWith(github.head_ref, 'sync/') }}
+        run: |
+          # fork 側で追加した新規ファイル。これらの編集は upstream と衝突しない。
+          fork_owned='^(CLAUDE\.md|CONTRIBUTING\.spindd\.md|\.github/workflows/spindd-.*|\.github/PULL_REQUEST_TEMPLATE/.*)$'
+          hits=$(grep -vE "$fork_owned" /tmp/changed.txt | grep -vxFf /tmp/added.txt || true)
+          if [ -n "$hits" ]; then
+            count=$(echo "$hits" | wc -l | tr -d ' ')
+            echo "$hits" | while read -r f; do
+              echo "::warning file=$f::upstream 由来のファイルを改変しています。追従のたびにコンフリクトします。より上位の手段（環境変数 / i18n / CSS 上書き / 新規ファイル）で代替できないか確認し、できない理由と AGPL §5(a) の改変明記を PR に記載してください（CONTRIBUTING.spindd.md §3・§5）。"
+            done
+            echo "改変された upstream 由来ファイル: ${count} 件"
+          else
+            echo "OK: upstream 由来ファイルの改変はありません。"
+          fi
