@@ -1,9 +1,9 @@
 {
   "workflows": {
     "workflow_states": {
-      "work_item_creation": "新しい作業項目を許可",
-      "work_item_creation_disable_tooltip": "作業項目の作成はこの状態では無効になっています",
-      "default_state": "デフォルトの状態は、すべてのメンバーが新しい作業項目を作成できるように設定されています。これは変更できません",
+      "work_item_creation": "新しい課題を許可",
+      "work_item_creation_disable_tooltip": "課題の作成はこの状態では無効になっています",
+      "default_state": "デフォルトの状態は、すべてのメンバーが新しい課題を作成できるように設定されています。これは変更できません",
       "state_change_count": "{count, plural, one {1つの許可された状態変更} other {{count}つの許可された状態変更}}",
       "movers_count": "{count, plural, one {1人のリストされたレビューア} other {{count}人のリストされたレビューア}}",
       "state_changes": {
@@ -14,19 +14,19 @@
         "move_to": "状態を変更",
         "movers": {
           "label": "誰によって移動された場合",
-          "tooltip": "レビューアは、作業項目を一つの状態から別の状態に移動することを許可されている人々です。",
+          "tooltip": "レビューアは、課題を一つの状態から別の状態に移動することを許可されている人々です。",
           "add": "レビューアを追加"
         }
       }
     },
     "workflow_disabled": {
-      "title": "この作業項目をここに移動できません。"
+      "title": "この課題をここに移動できません。"
     },
     "workflow_enabled": {
       "label": "状態変更"
     },
     "workflow_tree": {
-      "label": "作業項目が",
+      "label": "課題が",
       "state_change_label": "をここに移動できます"
     },
     "empty_state": {
@@ -42,11 +42,11 @@
     "confirmation_modals": {
       "reset_workflow": {
         "title": "このワークフローをリセットしてよろしいですか？",
-        "description": "このワークフローをリセットすると、すべての状態変更ルールが削除され、このプロジェクトで再度実行するために再作成が必要になります。"
+        "description": "このワークフローをリセットすると、すべての状態変更ルールが削除され、この現場で再度実行するために再作成が必要になります。"
       },
       "delete_state_change": {
         "title": "この状態変更ルールを削除してよろしいですか？",
-        "description": "削除すると、変更ができなくなり、このプロジェクトで再度実行するために再設定が必要になります。"
+        "description": "削除すると、変更ができなくなり、この現場で再度実行するために再設定が必要になります。"
       }
     },
     "toasts": {
