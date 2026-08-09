@@ -26,6 +26,7 @@ from plane.db.models import (  # noqa: E402
     Cycle,
     CycleIssue,
     Issue,
+    Profile,
     IssueAssignee,
     IssueComment,
     IssueLabel,
@@ -69,6 +70,13 @@ for email, last, first, display in PEOPLE:
     if created:
         user.set_password("PlanePoC!2026")
         user.save()
+    # UI 言語は User ではなく Profile が持つ（既定 "en"）。ここを "ja" にしないと
+    # データだけ日本語でメニューが英語のままになる。
+    # 反映は apps/web/core/store/user/profile.store.ts:115 の setLanguage 経由。
+    profile, _ = Profile.objects.get_or_create(user=user, defaults={"language": "ja"})
+    if profile.language != "ja":
+        profile.language = "ja"
+        profile.save(update_fields=["language"])
     users[email.split("@")[0]] = user
 
 yamada = users["yamada"]
