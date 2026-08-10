@@ -4,8 +4,8 @@
       "quickstart_guide": "クイックスタートガイド",
       "not_right_now": "今はしない",
       "create_project": {
-        "title": "プロジェクトを作成",
-        "description": "Planeのほとんどはプロジェクトから始まります。",
+        "title": "現場を作成",
+        "description": "Planeのほとんどは現場から始まります。",
         "cta": "始める"
       },
       "invite_team": {
@@ -40,16 +40,16 @@
     "recents": {
       "title": "最近",
       "empty": {
-        "project": "プロジェクトを訪問すると、最近のプロジェクトがここに表示されます。",
+        "project": "現場を訪問すると、最近の現場がここに表示されます。",
         "page": "ページを訪問すると、最近のページがここに表示されます。",
-        "issue": "作業項目を訪問すると、最近の作業項目がここに表示されます。",
+        "issue": "課題を訪問すると、最近の課題がここに表示されます。",
         "default": "まだ最近の項目がありません。"
       },
       "filters": {
         "all": "すべて",
-        "projects": "プロジェクト",
+        "projects": "現場",
         "pages": "ページ",
-        "issues": "作業項目"
+        "issues": "課題"
       }
     },
     "new_at_plane": {

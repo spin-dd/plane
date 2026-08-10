@@ -1,44 +1,44 @@
 {
   "project_settings": {
     "general": {
-      "enter_project_id": "プロジェクトIDを入力",
+      "enter_project_id": "現場IDを入力",
       "please_select_a_timezone": "タイムゾーンを選択してください",
       "archive_project": {
-        "title": "プロジェクトをアーカイブ",
-        "description": "プロジェクトをアーカイブすると、サイドナビゲーションから非表示になりますが、プロジェクトページからアクセスすることはできます。プロジェクトを復元または削除することもできます。",
-        "button": "プロジェクトをアーカイブ"
+        "title": "現場をアーカイブ",
+        "description": "現場をアーカイブすると、サイドナビゲーションから非表示になりますが、現場ページからアクセスすることはできます。現場を復元または削除することもできます。",
+        "button": "現場をアーカイブ"
       },
       "delete_project": {
-        "title": "プロジェクトを削除",
-        "description": "プロジェクトを削除すると、そのプロジェクト内のすべてのデータとリソースが永久に削除され、復元できなくなります。",
-        "button": "プロジェクトを削除"
+        "title": "現場を削除",
+        "description": "現場を削除すると、その現場内のすべてのデータとリソースが永久に削除され、復元できなくなります。",
+        "button": "現場を削除"
       },
       "toast": {
-        "success": "プロジェクトが正常に更新されました",
-        "error": "プロジェクトを更新できませんでした。もう一度お試しください。"
+        "success": "現場が正常に更新されました",
+        "error": "現場を更新できませんでした。もう一度お試しください。"
       }
     },
     "members": {
       "label": "メンバー",
-      "project_lead": "プロジェクトリーダー",
-      "project_lead_description": "プロジェクトのプロジェクトリーダーを選択してください。",
+      "project_lead": "現場リーダー",
+      "project_lead_description": "現場の現場リーダーを選択してください。",
       "default_assignee": "デフォルトの担当者",
-      "default_assignee_description": "プロジェクトのデフォルトの担当者を選択してください。",
-      "project_subscribers": "プロジェクトの購読者",
-      "project_subscribers_description": "このプロジェクトの通知を受け取るメンバーを選択してください。",
+      "default_assignee_description": "現場のデフォルトの担当者を選択してください。",
+      "project_subscribers": "現場の購読者",
+      "project_subscribers_description": "この現場の通知を受け取るメンバーを選択してください。",
       "guest_super_permissions": {
-        "title": "ゲストユーザーにすべての作業項目の閲覧権限を付与:",
-        "sub_heading": "これにより、ゲストはプロジェクトのすべての作業項目を閲覧できるようになります。"
+        "title": "ゲストユーザーにすべての課題の閲覧権限を付与:",
+        "sub_heading": "これにより、ゲストは現場のすべての課題を閲覧できるようになります。"
       },
       "invite_members": {
         "title": "メンバーを招待",
-        "sub_heading": "プロジェクトに参加するメンバーを招待します。",
+        "sub_heading": "現場に参加するメンバーを招待します。",
         "select_co_worker": "共同作業者を選択"
       }
     },
     "states": {
       "heading": "ステータス",
-      "description": "作業項目の進捗を追跡するためのワークフローのステータスを定義してカスタマイズします。",
+      "description": "課題の進捗を追跡するためのワークフローのステータスを定義してカスタマイズします。",
       "describe_this_state_for_your_members": "このステータスについてメンバーに説明してください。",
       "empty_state": {
         "title": "{groupKey}グループのステータスがありません",
@@ -47,7 +47,7 @@
     },
     "labels": {
       "heading": "ラベル",
-      "description": "作業項目を分類・整理するためのカスタムラベルを作成します",
+      "description": "課題を分類・整理するためのカスタムラベルを作成します",
       "label_title": "ラベルタイトル",
       "label_title_is_required": "ラベルタイトルは必須です",
       "label_max_char": "ラベル名は255文字を超えることはできません",
@@ -59,7 +59,7 @@
       "heading": "見積もり",
       "description": "チームの複雑さと作業負荷を伝えるのに役立ちます。",
       "label": "見積もり",
-      "title": "プロジェクトの見積もりを有効にする",
+      "title": "現場の見積もりを有効にする",
       "enable_description": "チームの複雑さと作業負荷を伝えるのに役立ちます。",
       "no_estimate": "見積もりなし",
       "new": "新しい見積もりシステム",
@@ -86,7 +86,7 @@
         "updated": {
           "success": {
             "title": "見積もりを更新",
-            "message": "プロジェクトの見積もりが更新されました。"
+            "message": "現場の見積もりが更新されました。"
           },
           "error": {
             "title": "見積もり更新に失敗",
@@ -112,7 +112,7 @@
         "reorder": {
           "success": {
             "title": "見積もりを並べ替えました",
-            "message": "プロジェクトの見積もりが並べ替えられました。"
+            "message": "現場の見積もりが並べ替えられました。"
           },
           "error": {
             "title": "見積もりの並べ替えに失敗",
@@ -179,16 +179,16 @@
     "automations": {
       "label": "自動化",
       "heading": "自動化",
-      "description": "プロジェクト管理ワークフローを効率化し、手動タスクを削減するために自動化アクションを設定します。",
+      "description": "現場管理ワークフローを効率化し、手動タスクを削減するために自動化アクションを設定します。",
       "auto-archive": {
-        "title": "完了した作業項目を自動的にアーカイブ",
-        "description": "Planeは完了またはキャンセルされた作業項目を自動的にアーカイブします。",
-        "duration": "閉じられた作業項目を自動的にアーカイブ"
+        "title": "完了した課題を自動的にアーカイブ",
+        "description": "Planeは完了またはキャンセルされた課題を自動的にアーカイブします。",
+        "duration": "閉じられた課題を自動的にアーカイブ"
       },
       "auto-close": {
-        "title": "作業項目を自動的に閉じる",
-        "description": "Planeは完了またはキャンセルされていない作業項目を自動的に閉じます。",
-        "duration": "非アクティブな作業項目を自動的に閉じる",
+        "title": "課題を自動的に閉じる",
+        "description": "Planeは完了またはキャンセルされていない課題を自動的に閉じます。",
+        "duration": "非アクティブな課題を自動的に閉じる",
         "auto_close_status": "自動クローズステータス"
       },
       "auto-remind": {
@@ -200,25 +200,25 @@
     "empty_state": {
       "labels": {
         "title": "ラベルがまだありません",
-        "description": "プロジェクトの作業項目を整理してフィルタリングするためのラベルを作成します。"
+        "description": "現場の課題を整理してフィルタリングするためのラベルを作成します。"
       },
       "estimates": {
         "title": "見積もりシステムがまだありません",
-        "description": "作業項目ごとの作業量を伝えるための見積もりセットを作成します。",
+        "description": "課題ごとの作業量を伝えるための見積もりセットを作成します。",
         "primary_button": "見積もりシステムを追加"
       },
       "integrations": {
         "title": "設定された統合がありません",
-        "description": "GitHubやその他の統合を設定して、プロジェクトの作業項目を同期します。"
+        "description": "GitHubやその他の統合を設定して、現場の課題を同期します。"
       }
     },
     "workflows": {
       "toggle": {
         "title": "ワークフローを有効にする",
-        "description": "作業項目の移動を制御するワークフローを設定します",
+        "description": "課題の移動を制御するワークフローを設定します",
         "no_states_tooltip": "ワークフローにステータスが追加されていません。",
-        "no_work_item_types_tooltip": "ワークフローに作業項目タイプが追加されていません。",
-        "no_states_or_work_item_types_tooltip": "ワークフローにステータスまたは作業項目タイプが追加されていません。",
+        "no_work_item_types_tooltip": "ワークフローに課題タイプが追加されていません。",
+        "no_states_or_work_item_types_tooltip": "ワークフローにステータスまたは課題タイプが追加されていません。",
         "toast": {
           "loading": {
             "enabling": "ワークフローを有効化中",
@@ -235,7 +235,7 @@
         }
       },
       "heading": "ワークフロー",
-      "description": "作業項目のトランジションを自動化し、タスクがプロジェクトのパイプラインを移動する方法を制御するルールを設定します。",
+      "description": "課題のトランジションを自動化し、タスクが現場のパイプラインを移動する方法を制御するルールを設定します。",
       "add_button": "新しいワークフローを追加",
       "search": "ワークフローを検索",
       "detail": {
@@ -243,20 +243,20 @@
         "add_states": "ステータスを追加",
         "unmapped_states": {
           "title": "マップされていないステータスを検出しました",
-          "description": "選択したタイプの一部の作業項目は、このワークフローに存在しないステータスにあります。",
+          "description": "選択したタイプの一部の課題は、このワークフローに存在しないステータスにあります。",
           "note": "このワークフローを有効化すると、これらの項目はこのワークフローの初期ステータスに自動的に移動します。",
           "label": "不足しているステータス",
-          "tooltip": "一部の作業項目がこのワークフローにマップされていないステータスにあります。ワークフローを開いて確認してください。"
+          "tooltip": "一部の課題がこのワークフローにマップされていないステータスにあります。ワークフローを開いて確認してください。"
         }
       },
       "select_states": {
         "empty_state": {
           "title": "すべてのステータスが使用中です",
-          "description": "このプロジェクトに定義されたすべてのステータスは、現在のワークフローにすでに含まれています。"
+          "description": "この現場に定義されたすべてのステータスは、現在のワークフローにすでに含まれています。"
         }
       },
       "default_footer": {
-        "fallback_message": "このワークフローは、ワークフローに割り当てられていない作業項目タイプに適用されます。"
+        "fallback_message": "このワークフローは、ワークフローに割り当てられていない課題タイプに適用されます。"
       },
       "create": {
         "heading": "新しいワークフローを作成",
@@ -275,7 +275,7 @@
           }
         },
         "work_item_type": {
-          "label": "作業項目タイプ"
+          "label": "課題タイプ"
         },
         "success": {
           "title": "成功！",
@@ -319,37 +319,37 @@
       }
     },
     "work_item_types": {
-      "heading": "作業項目タイプ",
-      "description": "独自のプロパティを持つさまざまな種類の作業項目を作成・カスタマイズします"
+      "heading": "課題タイプ",
+      "description": "独自のプロパティを持つさまざまな種類の課題を作成・カスタマイズします"
     },
     "features": {
       "cycles": {
-        "title": "サイクル",
-        "short_title": "サイクル",
-        "description": "このプロジェクト独自のリズムとペースに適応する柔軟な期間で作業をスケジュールします。",
-        "toggle_title": "サイクルを有効にする",
+        "title": "工程",
+        "short_title": "工程",
+        "description": "この現場独自のリズムとペースに適応する柔軟な期間で作業をスケジュールします。",
+        "toggle_title": "工程を有効にする",
         "toggle_description": "集中的な期間で作業を計画します。"
       },
       "modules": {
-        "title": "モジュール",
-        "short_title": "モジュール",
-        "description": "専任のリーダーと担当者を持つサブプロジェクトに作業を整理します。",
-        "toggle_title": "モジュールを有効にする",
-        "toggle_description": "プロジェクトメンバーはモジュールを作成および編集できるようになります。"
+        "title": "工種",
+        "short_title": "工種",
+        "description": "専任のリーダーと担当者を持つサブ現場に作業を整理します。",
+        "toggle_title": "工種を有効にする",
+        "toggle_description": "現場メンバーは工種を作成および編集できるようになります。"
       },
       "views": {
         "title": "ビュー",
         "short_title": "ビュー",
         "description": "カスタムソート、フィルター、表示オプションを保存したり、チームと共有したりします。",
         "toggle_title": "ビューを有効にする",
-        "toggle_description": "プロジェクトメンバーはビューを作成および編集できるようになります。"
+        "toggle_description": "現場メンバーはビューを作成および編集できるようになります。"
       },
       "pages": {
         "title": "ページ",
         "short_title": "ページ",
         "description": "自由形式のコンテンツを作成および編集します：メモ、ドキュメント、何でも。",
         "toggle_title": "ページを有効にする",
-        "toggle_description": "プロジェクトメンバーはページを作成および編集できるようになります。"
+        "toggle_description": "現場メンバーはページを作成および編集できるようになります。"
       },
       "intake": {
         "intake_responsibility": "受付責任",
@@ -358,34 +358,34 @@
         "short_title": "受付",
         "description": "ワークフローを中断することなく、非メンバーがバグ、フィードバック、提案を共有できるようにします。",
         "toggle_title": "受付を有効にする",
-        "toggle_description": "プロジェクトメンバーがアプリ内で受付リクエストを作成できるようにします。",
-        "toggle_tooltip_on": "プロジェクト管理者に有効化を依頼してください。",
-        "toggle_tooltip_off": "プロジェクト管理者に無効化を依頼してください。",
+        "toggle_description": "現場メンバーがアプリ内で受付リクエストを作成できるようにします。",
+        "toggle_tooltip_on": "現場管理者に有効化を依頼してください。",
+        "toggle_tooltip_off": "現場管理者に無効化を依頼してください。",
         "notify_assignee": {
           "title": "担当者に通知",
           "description": "新しい受付リクエストの場合、デフォルトの担当者が通知を通じてアラートを受け取ります"
         },
         "in_app": {
           "title": "アプリ内",
-          "description": "既存の作業項目を妨げることなく、ワークスペースのメンバーとゲストから新しい作業項目を受け取ります。"
+          "description": "既存の課題を妨げることなく、ワークスペースのメンバーとゲストから新しい課題を受け取ります。"
         },
         "email": {
           "title": "メール",
-          "description": "Planeのメールアドレスにメールを送信した誰からでも新しい作業項目を収集します。",
+          "description": "Planeのメールアドレスにメールを送信した誰からでも新しい課題を収集します。",
           "fieldName": "メールID"
         },
         "form": {
           "title": "フォーム",
-          "description": "専用の安全なフォームを通じて、ワークスペース外の方が潜在的な新しい作業項目を作成できるようにします。",
+          "description": "専用の安全なフォームを通じて、ワークスペース外の方が潜在的な新しい課題を作成できるようにします。",
           "fieldName": "デフォルトフォームURL",
-          "create_forms": "作業項目タイプを使用してフォームを作成",
+          "create_forms": "課題タイプを使用してフォームを作成",
           "manage_forms": "フォームを管理",
           "manage_forms_tooltip": "ワークスペース管理者に管理を依頼してください。",
           "create_form": "フォームを作成",
           "edit_form": "フォームの詳細を編集",
           "form_title": "フォームタイトル",
           "form_title_required": "フォームタイトルは必須です",
-          "work_item_type": "作業項目タイプ",
+          "work_item_type": "課題タイプ",
           "remove_property": "プロパティを削除",
           "select_properties": "プロパティを選択",
           "search_placeholder": "プロパティを検索",
@@ -413,110 +413,110 @@
       "time_tracking": {
         "title": "時間追跡",
         "short_title": "時間追跡",
-        "description": "作業項目やプロジェクトに費やした時間を記録します。",
+        "description": "課題や現場に費やした時間を記録します。",
         "toggle_title": "時間追跡を有効にする",
-        "toggle_description": "プロジェクトメンバーは作業時間を記録できるようになります。"
+        "toggle_description": "現場メンバーは作業時間を記録できるようになります。"
       },
       "milestones": {
         "title": "マイルストーン",
         "short_title": "マイルストーン",
-        "description": "マイルストーンは、作業項目を共有の完了日に向けて調整するレイヤーを提供します。",
+        "description": "マイルストーンは、課題を共有の完了日に向けて調整するレイヤーを提供します。",
         "toggle_title": "マイルストーンを有効にする",
-        "toggle_description": "マイルストーンの期限ごとに作業項目を整理します。"
+        "toggle_description": "マイルストーンの期限ごとに課題を整理します。"
       },
       "toasts": {
-        "loading": "プロジェクト機能を更新中...",
-        "success": "プロジェクト機能が正常に更新されました。",
-        "error": "プロジェクト機能の更新中に問題が発生しました。もう一度お試しください。"
+        "loading": "現場機能を更新中...",
+        "success": "現場機能が正常に更新されました。",
+        "error": "現場機能の更新中に問題が発生しました。もう一度お試しください。"
       }
     },
     "project_updates": {
-      "heading": "プロジェクトの更新",
-      "description": "このプロジェクトの統合された追跡と進捗監視"
+      "heading": "現場の更新",
+      "description": "この現場の統合された追跡と進捗監視"
     },
     "templates": {
       "heading": "テンプレート",
-      "description": "テンプレートを使用すると、プロジェクト、作業項目、ページの作成にかかる時間を80%短縮できます。"
+      "description": "テンプレートを使用すると、現場、課題、ページの作成にかかる時間を80%短縮できます。"
     },
     "cycles": {
       "auto_schedule": {
-        "heading": "サイクルの自動スケジュール",
-        "description": "手動設定なしでサイクルを維持します。",
-        "tooltip": "選択したスケジュールに基づいて新しいサイクルを自動的に作成します。",
+        "heading": "工程の自動スケジュール",
+        "description": "手動設定なしで工程を維持します。",
+        "tooltip": "選択したスケジュールに基づいて新しい工程を自動的に作成します。",
         "edit_button": "編集",
         "form": {
           "cycle_title": {
-            "label": "サイクルタイトル",
+            "label": "工程タイトル",
             "placeholder": "タイトル",
-            "tooltip": "タイトルは後続のサイクルに番号が追加されます。例：デザイン - 1/2/3",
+            "tooltip": "タイトルは後続の工程に番号が追加されます。例：デザイン - 1/2/3",
             "validation": {
-              "required": "サイクルタイトルは必須です",
+              "required": "工程タイトルは必須です",
               "max_length": "タイトルは255文字を超えてはいけません"
             }
           },
           "cycle_duration": {
-            "label": "サイクル期間",
+            "label": "工程期間",
             "unit": "週",
             "validation": {
-              "required": "サイクル期間は必須です",
-              "min": "サイクル期間は少なくとも1週間である必要があります",
-              "max": "サイクル期間は30週を超えてはいけません",
-              "positive": "サイクル期間は正の値である必要があります"
+              "required": "工程期間は必須です",
+              "min": "工程期間は少なくとも1週間である必要があります",
+              "max": "工程期間は30週を超えてはいけません",
+              "positive": "工程期間は正の値である必要があります"
             }
           },
           "cooldown_period": {
             "label": "クールダウン期間",
             "unit": "日",
-            "tooltip": "次のサイクルが始まる前のサイクル間の休止期間。",
+            "tooltip": "次の工程が始まる前の工程間の休止期間。",
             "validation": {
               "required": "クールダウン期間は必須です",
               "negative": "クールダウン期間は負の値にはできません"
             }
           },
           "start_date": {
-            "label": "サイクル開始日",
+            "label": "工程開始日",
             "validation": {
               "required": "開始日は必須です",
               "past": "開始日を過去の日付にすることはできません"
             }
           },
           "number_of_cycles": {
-            "label": "将来のサイクル数",
+            "label": "将来の工程数",
             "validation": {
-              "required": "サイクル数は必須です",
-              "min": "少なくとも1つのサイクルが必要です",
-              "max": "3つを超えるサイクルをスケジュールすることはできません"
+              "required": "工程数は必須です",
+              "min": "少なくとも1つの工程が必要です",
+              "max": "3つを超える工程をスケジュールすることはできません"
             }
           },
           "auto_rollover": {
-            "label": "作業項目の自動繰り越し",
-            "tooltip": "サイクルが完了した日に、未完了のすべての作業項目を次のサイクルに移動します。"
+            "label": "課題の自動繰り越し",
+            "tooltip": "工程が完了した日に、未完了のすべての課題を次の工程に移動します。"
           }
         },
         "toast": {
           "toggle": {
-            "loading_enable": "サイクルの自動スケジュールを有効化中",
-            "loading_disable": "サイクルの自動スケジュールを無効化中",
+            "loading_enable": "工程の自動スケジュールを有効化中",
+            "loading_disable": "工程の自動スケジュールを無効化中",
             "success": {
               "title": "成功！",
-              "message": "サイクルの自動スケジュールが正常に切り替えられました。"
+              "message": "工程の自動スケジュールが正常に切り替えられました。"
             },
             "error": {
               "title": "エラー！",
-              "message": "サイクルの自動スケジュールの切り替えに失敗しました。"
+              "message": "工程の自動スケジュールの切り替えに失敗しました。"
             }
           },
           "save": {
-            "loading": "サイクルの自動スケジュール設定を保存中",
+            "loading": "工程の自動スケジュール設定を保存中",
             "success": {
               "title": "成功！",
-              "message_create": "サイクルの自動スケジュール設定が正常に保存されました。",
-              "message_update": "サイクルの自動スケジュール設定が正常に更新されました。"
+              "message_create": "工程の自動スケジュール設定が正常に保存されました。",
+              "message_update": "工程の自動スケジュール設定が正常に更新されました。"
             },
             "error": {
               "title": "エラー！",
-              "message_create": "サイクルの自動スケジュール設定の保存に失敗しました。",
-              "message_update": "サイクルの自動スケジュール設定の更新に失敗しました。"
+              "message_create": "工程の自動スケジュール設定の保存に失敗しました。",
+              "message_update": "工程の自動スケジュール設定の更新に失敗しました。"
             }
           }
         }
