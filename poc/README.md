@@ -24,9 +24,19 @@ cp poc/.env.example poc/.env
 # SECRET_KEY と LIVE_SERVER_SECRET_KEY を書き換える
 #   openssl rand -hex 16
 
-docker compose --project-name plane-poc --env-file poc/.env \
-  -f deployments/cli/community/docker-compose.yml up -d
+docker compose --project-name plane-poc --env-file poc/.env --project-directory . \
+  -f deployments/cli/community/docker-compose.yml \
+  -f poc/docker-compose.override.yml up -d
 ```
+
+`poc/docker-compose.override.yml` は `apps/api/plane/settings/spindd.py` をマウントして
+`DJANGO_SETTINGS_MODULE` で有効化する（HEIC などの MIME 追加、`DATA_UPLOAD_MAX_MEMORY_SIZE`
+の切り離し）。リリース済みイメージにはこのファイルが無いため、マウントで代替している。
+
+**`--project-directory .` は必須。** 無いと override 内の相対パスが 1 つ目の compose
+ファイルのディレクトリ基準で解決され、マウント元を見失う。
+
+override 無しでも起動はできる（`FILE_SIZE_LIMIT` は環境変数だけで効く）。
 
 `migrator` がマイグレーションを流し終わるまで 1〜2 分かかる。次が 200 を返せば準備完了。
 
@@ -37,8 +47,9 @@ curl -s -o /dev/null -w '%{http_code}\n' http://localhost:8080/api/instances/
 ## データ投入
 
 ```bash
-docker compose --project-name plane-poc --env-file poc/.env \
+docker compose --project-name plane-poc --env-file poc/.env --project-directory . \
   -f deployments/cli/community/docker-compose.yml \
+  -f poc/docker-compose.override.yml \
   exec -T api python - < poc/seed_construction.py
 ```
 
@@ -62,8 +73,9 @@ docker compose --project-name plane-poc --env-file poc/.env \
 （`INSTANCE_NOT_CONFIGURED`）。次で設定する。
 
 ```bash
-docker compose --project-name plane-poc --env-file poc/.env \
+docker compose --project-name plane-poc --env-file poc/.env --project-directory . \
   -f deployments/cli/community/docker-compose.yml \
+  -f poc/docker-compose.override.yml \
   exec -T api python - < poc/setup_instance.py
 ```
 
@@ -81,18 +93,34 @@ docker compose --project-name plane-poc --env-file poc/.env \
 
 パスワードは全員 `PlanePoC!2026`。**PoC 専用。外部公開しないこと。**
 
-言語は右上のプロフィール → Settings から日本語に切り替える。
+UI 言語はシードが `Profile.language = "ja"` を設定するので、そのまま日本語で表示される。
+UI 言語を持つのは `User` ではなく `Profile`（既定 `"en"`）で、Profile は初回ログイン時に
+遅延作成される点に注意（`apps/api/plane/db/models/user.py:251`）。
+
+## 添付ファイル
+
+| 項目                   | PoC の設定                             | upstream 既定            |
+| ---------------------- | -------------------------------------- | ------------------------ |
+| 上限サイズ             | **50MB**（`FILE_SIZE_LIMIT=52428800`） | 5MB                      |
+| HEIC / HEIF            | **許可**（`spindd.py` で追加）         | 拒否                     |
+| DWG / DXF              | **許可**（同上）                       | 明示的な MIME では拒否   |
+| POST body の許容メモリ | 5MB に据え置き                         | `FILE_SIZE_LIMIT` と同値 |
+
+添付は presigned POST で S3/MinIO へ直送され Django を経由しないため、上限を上げても
+Django のメモリ消費は増えない。`DATA_UPLOAD_MAX_MEMORY_SIZE` を切り離しているのはそのため。
 
 ## 停止・破棄
 
 ```bash
 # 停止（データは残る）
-docker compose --project-name plane-poc --env-file poc/.env \
-  -f deployments/cli/community/docker-compose.yml down
+docker compose --project-name plane-poc --env-file poc/.env --project-directory . \
+  -f deployments/cli/community/docker-compose.yml \
+  -f poc/docker-compose.override.yml down
 
 # データごと破棄
-docker compose --project-name plane-poc --env-file poc/.env \
-  -f deployments/cli/community/docker-compose.yml down -v
+docker compose --project-name plane-poc --env-file poc/.env --project-directory . \
+  -f deployments/cli/community/docker-compose.yml \
+  -f poc/docker-compose.override.yml down -v
 ```
 
 ## 注意

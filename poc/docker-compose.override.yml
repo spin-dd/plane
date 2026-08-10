@@ -1,0 +1,46 @@
+# spin-dd fork addition — upstream には存在しない新規ファイル。
+#
+# PoC のスタックは upstream のリリース済みイメージ makeplane/plane-*:v1.4.1 を
+# 使っているため、fork 側で追加した apps/api/plane/settings/spindd.py が
+# イメージに含まれていない。
+#
+# この override はそのファイルを読み取り専用でマウントし、
+# DJANGO_SETTINGS_MODULE で有効化する。自前イメージをビルドせずに
+# 設定オーバーライドを検証できる。
+#
+# 使い方（-f を 2 つ重ねる。順番が重要）:
+#   docker compose --project-name plane-poc --env-file poc/.env \
+#     --project-directory . \
+#     -f deployments/cli/community/docker-compose.yml \
+#     -f poc/docker-compose.override.yml up -d
+#
+# --project-directory . が必須。無いと相対パスが 1 つ目の compose ファイルの
+# ディレクトリ（deployments/cli/community/）基準で解決され、マウント元を見失う。
+#
+# 本番では override ではなく自前イメージをビルドし、
+# DJANGO_SETTINGS_MODULE=plane.settings.spindd を環境変数で渡すこと。
+
+x-spindd-settings: &spindd-settings
+  DJANGO_SETTINGS_MODULE: plane.settings.spindd
+  # 添付は presigned POST で S3 へ直送され Django を経由しないため、
+  # POST body の許容メモリは FILE_SIZE_LIMIT と切り離して 5MB に据え置く。
+  DATA_UPLOAD_MAX_MEMORY_SIZE: 5242880
+
+x-spindd-mount: &spindd-mount
+  - type: bind
+    source: ./apps/api/plane/settings/spindd.py
+    target: /code/plane/settings/spindd.py
+    read_only: true
+
+services:
+  api:
+    environment: *spindd-settings
+    volumes: *spindd-mount
+
+  worker:
+    environment: *spindd-settings
+    volumes: *spindd-mount
+
+  beat-worker:
+    environment: *spindd-settings
+    volumes: *spindd-mount

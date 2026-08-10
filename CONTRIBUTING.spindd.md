@@ -23,12 +23,12 @@ upstream は約 3 ヶ月で **109 コミット / 300 ファイル超**のペー�
 
 ## 1. ブランチとリモートの構成
 
-| 名前 | 役割 |
-|---|---|
-| `spindd` | **既定ブランチ。** 常に upstream のリリースタグを祖先に持つ |
-| `preview` | upstream 追従用のミラー。**作業ブランチのベースには使わない** |
-| `sync/vX.Y.Z` | upstream のリリースタグを取り込むための一時ブランチ |
-| `feat/<issue>-<desc>` 等 | 作業ブランチ。`spindd` から切って `spindd` へ PR |
+| 名前                     | 役割                                                          |
+| ------------------------ | ------------------------------------------------------------- |
+| `spindd`                 | **既定ブランチ。** 常に upstream のリリースタグを祖先に持つ   |
+| `preview`                | upstream 追従用のミラー。**作業ブランチのベースには使わない** |
+| `sync/vX.Y.Z`            | upstream のリリースタグを取り込むための一時ブランチ           |
+| `feat/<issue>-<desc>` 等 | 作業ブランチ。`spindd` から切って `spindd` へ PR              |
 
 初回セットアップ:
 
@@ -73,18 +73,46 @@ git merge vX.Y.Z                                # rebase ではなく merge
 コンフリクト量は**既存ファイルを何行変えたか**にほぼ比例する。
 下の表を**上から順に**検討し、下へ落ちるほど設計を見直すこと。
 
-| 優先 | 手段 | 追従耐性 | 主な用途 |
-|---|---|---|---|
-| 1 | 環境変数・インスタンス設定 | ◎ 差分ゼロ | 認証、SMTP、ストレージ、`AMQP_URL` |
-| 2 | i18n ロケール (`packages/i18n/src/locales/ja`) | ○ JSON の値のみ | 用語の置換 |
-| 3 | テーマ・CSS の上書き | ○ | 見た目・ブランディング |
-| 4 | 新規ファイル / 新規 Django アプリの追加 | ○ 衝突しない | 独自機能 |
-| 5 | 既存ファイルの改変 | ✕ 毎回衝突 | **最終手段。** PR に理由を明記する |
+| 優先 | 手段                                           | 追従耐性        | 主な用途                           |
+| ---- | ---------------------------------------------- | --------------- | ---------------------------------- |
+| 1    | 環境変数・インスタンス設定                     | ◎ 差分ゼロ      | 認証、SMTP、ストレージ、`AMQP_URL` |
+| 2    | i18n ロケール (`packages/i18n/src/locales/ja`) | ○ JSON の値のみ | 用語の置換                         |
+| 3    | テーマ・CSS の上書き                           | ○               | 見た目・ブランディング             |
+| 4    | 新規ファイル / 新規 Django アプリの追加        | ○ 衝突しない    | 独自機能                           |
+| 5    | 既存ファイルの改変                             | ✕ 毎回衝突      | **最終手段。** PR に理由を明記する |
 
 ### プラグイン seam は存在しない
 
 `ce` / `ee` の分離は `packages/editor` にしか無く、`ee` は `ce` を re-export しているだけである。
 **Plane は editor 以外に拡張ポイントを持たないので、独自機能の置き場所は自分で設計する必要がある。**
+
+### Django settings を上書きする（`common.py` を触らない）
+
+`manage.py` / `wsgi.py` / `asgi.py` / `celery.py` はいずれも
+
+```python
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "plane.settings.production")
+```
+
+としている。**`setdefault` なので環境変数が既にあればそちらが勝つ。**
+
+したがって設定を変えたいときは `plane/settings/common.py` を改変せず、
+**`apps/api/plane/settings/spindd.py`（新規ファイル）に追記**して
+環境変数 `DJANGO_SETTINGS_MODULE=plane.settings.spindd` で有効化する。
+
+```python
+# apps/api/plane/settings/spindd.py
+from .production import *  # noqa
+
+ATTACHMENT_MIME_TYPES = [*ATTACHMENT_MIME_TYPES, "image/heic", "image/heif"]
+```
+
+優先度 1（環境変数）と 4（新規ファイル）の組み合わせで優先度 5 を回避できる。
+ハードコードされたリストや定数を変えたくなったら、まずここで足せないか検討すること。
+
+PoC のスタックは upstream のリリース済みイメージを使っており `spindd.py` を含まないため、
+`poc/docker-compose.override.yml` がこのファイルをマウントして有効化する。
+本番では自前イメージをビルドし、環境変数で指定する。
 
 ### まず i18n で足りるか確かめる
 
