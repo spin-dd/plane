@@ -81,10 +81,71 @@ git merge vX.Y.Z                                # rebase ではなく merge
 | 4    | 新規ファイル / 新規 Django アプリの追加        | ○ 衝突しない    | 独自機能                           |
 | 5    | 既存ファイルの改変                             | ✕ 毎回衝突      | **最終手段。** PR に理由を明記する |
 
-### プラグイン seam は存在しない
+### 拡張の継ぎ目（seam）は存在する
 
-`ce` / `ee` の分離は `packages/editor` にしか無く、`ee` は `ce` を re-export しているだけである。
-**Plane は editor 以外に拡張ポイントを持たないので、独自機能の置き場所は自分で設計する必要がある。**
+> 2026-08-10 訂正: 以前このガイドは「プラグイン seam は存在しない」と記述していた。**誤りだった。**
+> CE は空のスタブを置き、EE が同じファイルを実装で置き換える設計になっている。
+
+**本体が空のスタブ = 拡張のための継ぎ目**である。CE では空のまま維持されるので upstream がほとんど触らず、
+ここを埋める形の改変はコンフリクトしにくい。
+
+| ファイル                                                                        | 空スタブ                                   | 用途                     |
+| ------------------------------------------------------------------------------- | ------------------------------------------ | ------------------------ |
+| `apps/web/app/routes/extended.ts`                                               | `extendedRoutes = []`                      | 画面の追加               |
+| `apps/web/app/routes/redirects/extended/index.ts`                               | `extendedRedirectRoutes = []`              | リダイレクト             |
+| `apps/web/core/hooks/use-workspace-issue-properties-extended.tsx`               | `() => {}`                                 | カスタムプロパティの取得 |
+| `apps/web/core/components/workspace-notifications/notification-card/content.ts` | `ADDITIONAL_NOTIFICATION_CONTENT_MAP = {}` | 通知種別の追加           |
+| `packages/constants/src/auth/extended.ts`                                       | `EXTENDED_LOGIN_MEDIUM_LABELS = {}`        | 認証手段の追加           |
+| `packages/editor/src/ce/constants/assets.ts`                                    | `ADDITIONAL_ASSETS_META_DATA_RECORD = {}`  | エディタ拡張             |
+| `packages/editor/src/ce/constants/extensions.ts`                                | `ADDITIONAL_BLOCK_NODE_TYPES = []`         | 同上                     |
+
+`routes.ts` は `mergeRoutes(coreRoutes, extendedRoutes)` で合成しており、`extendedRoutes` 側が
+core を上書きできる（`app/routes/helper.ts`）。
+
+**注意:** `ExtendedProjectSidebar` / `ExtendedAppHeader` / `extended-sidebar-item.tsx` などは
+CE の実装本体であり継ぎ目ではない。"extended" は「拡張サイドバー」という UI 要素の名前である。
+継ぎ目かどうかは**エクスポートされている本体が空かどうか**で判断する。
+
+### 継ぎ目の使い方: 実装は自パッケージ、継ぎ目は 1 行
+
+継ぎ目のファイルに実装を書くと、そのファイルがコンフリクト対象として育ってしまう。
+**実装は必ず `packages/spindd`（フロント）/ `apps/api/spindd_ext`（バックエンド）に置き、
+継ぎ目には re-export の 1 行だけを書く。**
+
+```ts
+// apps/web/app/routes/extended.ts（upstream のスタブ。本体をこの 1 行に差し替える）
+export { extendedRoutes } from "@plane/spindd/routes";
+```
+
+こうするとコンフリクト面積が「機能の大きさ」ではなく「継ぎ目の数」になる。
+
+### バックエンドは upstream を 1 行も触らずに拡張できる
+
+`ROOT_URLCONF` と `INSTALLED_APPS` はどちらも**設定値**なので、`plane/settings/spindd.py` から
+差し替えられる。`plane/urls.py` も `plane/settings/common.py` も改変不要である。
+
+```python
+# apps/api/plane/settings/spindd.py
+INSTALLED_APPS += ("spindd_ext",)
+ROOT_URLCONF = "spindd_ext.urls"     # plane/urls.py を編集せずに URL を足せる
+```
+
+```python
+# apps/api/spindd_ext/urls.py（新規）
+from plane.urls import urlpatterns as plane_urlpatterns
+
+urlpatterns = [*plane_urlpatterns, path("api/spindd/", include("spindd_ext.api.urls"))]
+```
+
+独自アプリなので `migrations/` も自前で持て、§4 の連番衝突も起きない。
+
+### 継ぎ目で足りない場合
+
+継ぎ目は「画面の追加」と「データ取得」用で、**既存画面への差し込み用のものは無い**。
+現場詳細画面に工事情報パネルを出すような改変は実コンポーネントを触ることになる（優先度 5）。
+
+避けるには、**既存画面に差し込まず独立したページとして作る**。`extendedRoutes` に素直に乗るため
+追従耐性が段違いに良い。既存画面への差し込みは、独立ページで代替できないと確認できてから行う。
 
 ### Django settings を上書きする（`common.py` を触らない）
 

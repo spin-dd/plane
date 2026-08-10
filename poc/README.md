@@ -79,6 +79,31 @@ docker compose --project-name plane-poc --env-file poc/.env --project-directory 
   exec -T api python - < poc/setup_instance.py
 ```
 
+### 工事台帳（spindd_ext）
+
+独自 Django アプリのマイグレーションを流し、架空の工事情報 3 件を投入する。
+
+```bash
+docker compose --project-name plane-poc --env-file poc/.env --project-directory . \
+  -f deployments/cli/community/docker-compose.yml \
+  -f poc/docker-compose.override.yml \
+  exec -T api python manage.py migrate spindd_ext
+
+docker compose --project-name plane-poc --env-file poc/.env --project-directory . \
+  -f deployments/cli/community/docker-compose.yml \
+  -f poc/docker-compose.override.yml \
+  exec -T api python - < poc/seed_construction_ledger.py
+```
+
+API は `/api/spindd/workspaces/spin-kensetsu/construction-ledger/`。
+画面は `/<workspaceSlug>/construction-ledger`（**フロントは dev サーバでのみ確認できる**。
+リリース済みイメージには `@plane/spindd` が含まれていない）。
+
+```bash
+pnpm turbo run build --filter=web^...   # 初回のみ
+pnpm --filter web dev                    # http://localhost:3000
+```
+
 ## ログイン
 
 <http://localhost:8080>

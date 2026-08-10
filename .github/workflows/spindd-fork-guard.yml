@@ -50,7 +50,7 @@ jobs:
         run: |
           # fork 側で追加したファイル。upstream に存在しないので編集しても衝突しない。
           # 新しく fork 専用のファイル・ディレクトリを追加したらここに足すこと。
-          fork_owned='^(CLAUDE\.md|CONTRIBUTING\.spindd\.md|poc/.*|docs/spindd-.*|apps/api/plane/settings/spindd\.py|\.github/workflows/spindd-.*|\.github/PULL_REQUEST_TEMPLATE/.*)$'
+          fork_owned='^(CLAUDE\.md|CONTRIBUTING\.spindd\.md|poc/.*|docs/spindd-.*|packages/spindd/.*|apps/api/spindd_ext/.*|apps/api/plane/settings/spindd\.py|apps/web/app/spindd/.*|\.github/workflows/spindd-.*|\.github/PULL_REQUEST_TEMPLATE/.*)$'
           hits=$(grep -vE "$fork_owned" /tmp/changed.txt | grep -vxFf /tmp/added.txt || true)
           if [ -n "$hits" ]; then
             count=$(echo "$hits" | wc -l | tr -d ' ')

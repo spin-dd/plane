@@ -1,0 +1,34 @@
+{
+  "name": "@plane/spindd",
+  "version": "1.4.1",
+  "private": true,
+  "description": "spin-dd fork extensions for the Japanese construction use case (not part of upstream Plane)",
+  "license": "AGPL-3.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./routes": "./src/routes.ts",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "check:lint": "oxlint --max-warnings=0 .",
+    "check:types": "tsc --noEmit",
+    "check:format": "oxfmt --check .",
+    "fix:lint": "oxlint --fix .",
+    "fix:format": "oxfmt .",
+    "clean": "rm -rf .turbo && rm -rf node_modules"
+  },
+  "dependencies": {
+    "@plane/constants": "workspace:*",
+    "@react-router/dev": "catalog:",
+    "axios": "catalog:",
+    "react": "catalog:",
+    "react-router": "catalog:",
+    "swr": "catalog:"
+  },
+  "devDependencies": {
+    "@plane/typescript-config": "workspace:*",
+    "@types/react": "catalog:",
+    "typescript": "catalog:"
+  }
+}
