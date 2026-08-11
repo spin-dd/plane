@@ -1,6 +1,12 @@
 # Copyright (c) 2023-present Plane Software, Inc. and contributors
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
+#
+# Modified by spin-dd on 2026-08-11 (AGPL-3.0 §5(a)):
+# GUEST の可視範囲を「自分が作成した課題のみ」から「作成した、または担当している
+# 課題」へ広げた。判定は plane/spindd_ext/guest_scope.py に切り出してあり、
+# ここでの改変は import と呼び出しの置き換えに留めている。
+# 経緯と根拠は CONTRIBUTING.spindd.md §3 と Issue #12 を参照。
 
 # Python imports
 import copy
@@ -69,6 +75,7 @@ from plane.utils.grouper import (
     issue_queryset_grouper,
 )
 from plane.utils.host import base_host
+from plane.spindd_ext.guest_scope import guest_visible_issue_filter, is_issue_visible_to_guest
 from plane.utils.issue_filters import issue_filters
 from plane.utils.order_queryset import order_issue_queryset
 from plane.utils.paginator import GroupedOffsetPaginator, SubGroupedOffsetPaginator
@@ -103,7 +110,7 @@ class IssueListEndpoint(BaseAPIView):
             is_active=True,
             project__guest_view_all_features=False,
         ).exists():
-            queryset = queryset.filter(created_by=request.user)
+            queryset = queryset.filter(guest_visible_issue_filter(request.user))
 
         # Apply filtering from filterset
         queryset = self.filter_queryset(queryset)
@@ -317,8 +324,9 @@ class IssueViewSet(BaseViewSet):
             ).exists()
             and not project.guest_view_all_features
         ):
-            issue_queryset = issue_queryset.filter(created_by=request.user)
-            filtered_issue_queryset = filtered_issue_queryset.filter(created_by=request.user)
+            guest_scope = guest_visible_issue_filter(request.user)
+            issue_queryset = issue_queryset.filter(guest_scope)
+            filtered_issue_queryset = filtered_issue_queryset.filter(guest_scope)
 
         if group_by:
             if sub_group_by:
@@ -606,7 +614,7 @@ class IssueViewSet(BaseViewSet):
                 is_active=True,
             ).exists()
             and not project.guest_view_all_features
-            and not issue.created_by == request.user
+            and not is_issue_visible_to_guest(issue, request.user)
         ):
             return Response(
                 {"error": "You are not allowed to view this issue"},
@@ -916,8 +924,9 @@ class IssuePaginatedViewSet(BaseViewSet):
             is_active=True,
         )
         if project_member.exists() and not project.guest_view_all_features:
-            base_queryset = base_queryset.filter(created_by=request.user)
-            queryset = queryset.filter(created_by=request.user)
+            guest_scope = guest_visible_issue_filter(request.user)
+            base_queryset = base_queryset.filter(guest_scope)
+            queryset = queryset.filter(guest_scope)
 
         # filtering issues by greater then updated_at given by the user
         if updated_at:
@@ -1044,12 +1053,14 @@ class IssueDetailEndpoint(BaseAPIView):
                     project__project_projectmember__role=ROLE.GUEST.value,
                     project__guest_view_all_features=True,
                 )
-                | Q(
-                    project__project_projectmember__member=self.request.user,
-                    project__project_projectmember__is_active=True,
-                    project__project_projectmember__role=ROLE.GUEST.value,
-                    project__guest_view_all_features=False,
-                    created_by=self.request.user,
+                | (
+                    Q(
+                        project__project_projectmember__member=self.request.user,
+                        project__project_projectmember__is_active=True,
+                        project__project_projectmember__role=ROLE.GUEST.value,
+                        project__guest_view_all_features=False,
+                    )
+                    & guest_visible_issue_filter(self.request.user)
                 )
             )
             .values("id")
@@ -1347,7 +1358,7 @@ class IssueDetailIdentifierEndpoint(BaseAPIView):
                 is_active=True,
             ).exists()
             and not project.guest_view_all_features
-            and not issue.created_by == request.user
+            and not is_issue_visible_to_guest(issue, request.user)
         ):
             return Response(
                 {"error": "You are not allowed to view this issue"},

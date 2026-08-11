@@ -1,6 +1,11 @@
 # Copyright (c) 2023-present Plane Software, Inc. and contributors
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
+#
+# Modified by spin-dd on 2026-08-11 (AGPL-3.0 §5(a)):
+# GUEST の可視範囲を「自分が作成した課題のみ」から「作成した、または担当している
+# 課題」へ広げた。判定は plane/spindd_ext/guest_scope.py に切り出してある。
+# 経緯と根拠は CONTRIBUTING.spindd.md §3 と Issue #12 を参照。
 
 # Third party imports
 from rest_framework import status
@@ -22,6 +27,7 @@ from plane.app.serializers import (
 from plane.app.permissions import allow_permission, ROLE
 from plane.utils.global_paginator import paginate
 from plane.utils.timezone_converter import user_timezone_converter
+from plane.spindd_ext.guest_scope import is_issue_visible_to_guest
 
 
 class IssueVersionEndpoint(BaseAPIView):
@@ -97,7 +103,7 @@ class WorkItemDescriptionVersionEndpoint(BaseAPIView):
                 is_active=True,
             ).exists()
             and not project.guest_view_all_features
-            and not issue.created_by == request.user
+            and not is_issue_visible_to_guest(issue, request.user)
         ):
             return Response(
                 {"error": "You are not allowed to view this issue"},

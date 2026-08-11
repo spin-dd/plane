@@ -1,6 +1,11 @@
 # Copyright (c) 2023-present Plane Software, Inc. and contributors
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
+#
+# Modified by spin-dd on 2026-08-11 (AGPL-3.0 §5(a)):
+# GUEST の可視範囲を「自分が作成した課題のみ」から「作成した、または担当している
+# 課題」へ広げた。判定は plane/spindd_ext/guest_scope.py に切り出してある。
+# 経緯と根拠は CONTRIBUTING.spindd.md §3 と Issue #12 を参照。
 
 # Python imports
 import json
@@ -23,6 +28,7 @@ from plane.db.models import IssueComment, ProjectMember, CommentReaction, Projec
 from plane.bgtasks.issue_activities_task import issue_activity
 from plane.utils.host import base_host
 from plane.bgtasks.webhook_task import model_activity
+from plane.spindd_ext.guest_scope import is_issue_visible_to_guest
 
 
 class IssueCommentViewSet(BaseViewSet):
@@ -73,7 +79,7 @@ class IssueCommentViewSet(BaseViewSet):
                 is_active=True,
             ).exists()
             and not project.guest_view_all_features
-            and not issue.created_by == request.user
+            and not is_issue_visible_to_guest(issue, request.user)
         ):
             return Response(
                 {"error": "You are not allowed to comment on the issue"},
