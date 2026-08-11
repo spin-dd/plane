@@ -166,6 +166,22 @@ upstream の Commercial 版と同じ意味に揃えるものであって独自�
 **判定ロジックを各所にインラインで書き戻さないこと。** `guest_scope.py` に集約してあるのは、
 追従のたびに 8 箇所の条件式をレビューし直す羽目にならないようにするためである。
 
+### fork のテストを走らせる
+
+`plane/settings/test.py`（upstream）は `INSTALLED_APPS` に `plane.spindd_ext` を含まないため、
+そのままでは独自モデルが `RuntimeError: Model class ... doesn't declare an explicit app_label`
+で読めない。`ROOT_URLCONF` も `plane.urls` のままなので `/api/spindd/` が 404 になる。
+
+`plane/settings/spindd_test.py`（新規）で両方を足してある。**fork のテストはこれを指定して走らせる。**
+
+```bash
+docker compose -f docker-compose-test.yml run --rm api-tests \
+  pytest --ds=plane.settings.spindd_test -q
+```
+
+アプリの追加は加算的なので、この設定で upstream のテストも通る（実測 527 件）。
+`pytest.ini` は upstream 由来なので改変していない。
+
 ### 継ぎ目で足りない場合
 
 継ぎ目は「画面の追加」と「データ取得」用で、**既存画面への差し込み用のものは無い**。

@@ -43,8 +43,36 @@ export type TConstructionLedger = {
   truncated: boolean;
   /** 請負金額の合計。切り詰めの影響を受けないよう DB 側で集計している。 */
   total_contract_amount: number;
+  /**
+   * 編集できる現場の id。ワークスペース ADMIN なら `"all"`。
+   * UI の出し分けにだけ使う。権限はサーバ側が強制する。
+   */
+  editable_project_ids: "all" | string[];
   results: TConstructionProject[];
 };
+
+/** 登録・更新で送るフィールド。`project` は作成時のみ受け付けられる。 */
+export type TConstructionProjectPayload = Partial<
+  Pick<
+    TConstructionProject,
+    | "contract_number"
+    | "official_name"
+    | "client_name"
+    | "site_address"
+    | "building_use"
+    | "structure"
+    | "total_floor_area"
+    | "contract_type"
+    | "contract_amount"
+    | "contract_date"
+    | "construction_start"
+    | "construction_end"
+    | "actual_completion"
+    | "site_agent"
+    | "chief_engineer"
+    | "remarks"
+  >
+> & { project?: string };
 
 export type TUnregisteredProject = { id: string; name: string; identifier: string };
 
@@ -76,6 +104,28 @@ export class ConstructionService {
   async unregisteredProjects(workspaceSlug: string): Promise<{ count: number; results: TUnregisteredProject[] }> {
     const response = await this.client.get<{ count: number; results: TUnregisteredProject[] }>(
       `/api/spindd/workspaces/${workspaceSlug}/construction-projects/unregistered/`
+    );
+    return response.data;
+  }
+
+  /**
+   * 新規登録。`project` は作成時のみ指定できる（作成後は付け替え不可）。
+   *
+   * CSRF トークンは不要。`BaseSessionAuthentication.enforce_csrf` が no-op で
+   * REST API では CSRF を強制していないため、`withCredentials` だけで通る。
+   */
+  async create(workspaceSlug: string, payload: TConstructionProjectPayload): Promise<TConstructionProject> {
+    const response = await this.client.post<TConstructionProject>(
+      `/api/spindd/workspaces/${workspaceSlug}/construction-projects/`,
+      payload
+    );
+    return response.data;
+  }
+
+  async update(workspaceSlug: string, id: number, payload: TConstructionProjectPayload): Promise<TConstructionProject> {
+    const response = await this.client.patch<TConstructionProject>(
+      `/api/spindd/workspaces/${workspaceSlug}/construction-projects/${id}/`,
+      payload
     );
     return response.data;
   }

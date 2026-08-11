@@ -10,6 +10,13 @@
  * 実装は全部この中に置く。継ぎ目の一覧は CONTRIBUTING.spindd.md §3 を参照。
  */
 
+export { ConstructionForm } from "./components/construction-form";
 export { default as ConstructionLedgerPage } from "./pages/construction-ledger";
 export { ConstructionService } from "./services/construction.service";
-export type { TConstructionLedger, TConstructionProject, TContractType } from "./services/construction.service";
+export type {
+  TConstructionLedger,
+  TConstructionProject,
+  TConstructionProjectPayload,
+  TContractType,
+  TUnregisteredProject,
+} from "./services/construction.service";

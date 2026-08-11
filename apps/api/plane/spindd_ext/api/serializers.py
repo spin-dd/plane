@@ -6,7 +6,8 @@
 
 from rest_framework import serializers
 
-from plane.db.models import ProjectMember
+from plane.db.models import ProjectMember, WorkspaceMember
+from plane.db.models.project import ROLE
 from plane.spindd_ext.models import ConstructionProject
 
 
@@ -66,10 +67,20 @@ class ConstructionProjectSerializer(serializers.ModelSerializer):
 
         request = self.context.get("request")
         user = getattr(request, "user", None)
-        if user is None or not ProjectMember.objects.filter(
-            project=value, member=user, is_active=True
-        ).exists():
-            # 非公開プロジェクトの名称が 201 応答から漏れるのも防ぐ。
+        if user is None:
             raise serializers.ValidationError("参加していない現場には工事情報を登録できません。")
+
+        # 請負金額を含むため、登録できるのは現場 ADMIN かワークスペース ADMIN のみ。
+        # 非公開プロジェクトの名称が 201 応答から漏れるのも同時に防ぐ。
+        is_workspace_admin = WorkspaceMember.objects.filter(
+            workspace=value.workspace, member=user, role=ROLE.ADMIN.value, is_active=True
+        ).exists()
+        is_project_admin = ProjectMember.objects.filter(
+            project=value, member=user, role=ROLE.ADMIN.value, is_active=True
+        ).exists()
+        if not (is_workspace_admin or is_project_admin):
+            raise serializers.ValidationError(
+                "この現場に工事情報を登録する権限がありません。現場の管理者に依頼してください。"
+            )
 
         return value

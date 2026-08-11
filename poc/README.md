@@ -96,8 +96,18 @@ docker compose --project-name plane-poc --env-file poc/.env --project-directory 
 ```
 
 API は `/api/spindd/workspaces/spin-kensetsu/construction-ledger/`。
-**入力手段は現状 API のみ。** Plane は `django.contrib.admin` を `INSTALLED_APPS` に
-含めておらず `admin/` の URL も無いため、Django admin は使えない。
+
+**登録・編集は台帳ページのフォームから行う。** Plane は `django.contrib.admin` を
+`INSTALLED_APPS` に含めておらず `admin/` の URL も無いため、Django admin は使えない。
+
+書き込み権限は**ワークスペース ADMIN または対象現場の ADMIN** に限る（請負金額を含むため）。
+シードの役割だと以下のようになる。
+
+| ユーザー                                         | 権限   | 編集できる現場                 |
+| ------------------------------------------------ | ------ | ------------------------------ |
+| `yamada`（ワークスペース ADMIN）                 | 全現場 | すべて                         |
+| `sato`（SKTC の現場 ADMIN）                      | 1 現場 | SKTC のみ                      |
+| `suzuki` / `tanaka` / `takahashi`（現場 MEMBER） | なし   | 閲覧のみ（編集ボタンが出ない） |
 
 画面は `/<workspaceSlug>/construction-ledger`（**フロントは dev サーバでのみ確認できる**。
 リリース済みイメージには `@plane/spindd` が含まれていない）。
