@@ -6,7 +6,7 @@
 
 from django.urls import path
 
-from spindd_ext.api.views import ConstructionProjectViewSet, UnregisteredProjectListEndpoint
+from plane.spindd_ext.api.views import ConstructionProjectViewSet, UnregisteredProjectListEndpoint
 
 urlpatterns = [
     path(

@@ -37,7 +37,11 @@ export type TConstructionProject = {
 };
 
 export type TConstructionLedger = {
+  /** 可視範囲の総件数。`results` は `limit` で切り詰められることがある。 */
   count: number;
+  /** `count` が `limit` を超えて切り詰められたか。 */
+  truncated: boolean;
+  /** 請負金額の合計。切り詰めの影響を受けないよう DB 側で集計している。 */
   total_contract_amount: number;
   results: TConstructionProject[];
 };

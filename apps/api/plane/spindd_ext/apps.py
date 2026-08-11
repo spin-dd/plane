@@ -15,5 +15,5 @@ class SpinddExtConfig(AppConfig):
     """
 
     default_auto_field = "django.db.models.BigAutoField"
-    name = "spindd_ext"
+    name = "plane.spindd_ext"
     verbose_name = "spindd 拡張"

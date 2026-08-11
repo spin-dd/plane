@@ -46,12 +46,17 @@ export default function ConstructionLedgerPage() {
   }
 
   if (error) {
+    // AxiosError をそのまま JSON 化すると toJSON() が config（URL・ヘッダ・パラメータ）
+    // まで含めるため、画面にはステータスと概要だけを出す。
+    const status = (error as { response?: { status?: number } })?.response?.status;
     return (
       <div className="p-6">
-        <p className="text-danger-text text-13">工事台帳を取得できませんでした。</p>
-        <pre className="mt-2 overflow-x-auto rounded-md bg-layer-1 p-3 text-11 text-tertiary">
-          {JSON.stringify(error, null, 2)}
-        </pre>
+        <p className="text-13 text-danger-primary">
+          工事台帳を取得できませんでした。{status ? `（HTTP ${status}）` : ""}
+        </p>
+        <p className="mt-1 text-11 text-tertiary">
+          この現場に参加しているか、工事情報が登録されているかを確認してください。
+        </p>
       </div>
     );
   }
@@ -63,7 +68,8 @@ export default function ConstructionLedgerPage() {
       <div className="flex flex-shrink-0 items-baseline justify-between border-b border-subtle px-6 py-4">
         <h1 className="text-16 font-semibold text-primary">工事台帳</h1>
         <p className="text-13 text-tertiary">
-          {data?.count ?? 0} 件 / 請負金額合計 {yen(data?.total_contract_amount ?? 0)}
+          {data?.count ?? 0} 件{data?.truncated ? `（${rows.length} 件を表示）` : ""} / 請負金額合計{" "}
+          {yen(data?.total_contract_amount ?? 0)}
         </p>
       </div>
 

@@ -9,7 +9,7 @@
 plane/urls.py を改変せずに URL を追加するための入れ物である。
 plane 側の urlpatterns をそのまま取り込み、後ろに独自のものを足す。
 
-有効化は plane/settings/spindd.py の ROOT_URLCONF = "spindd_ext.urls" で行う。
+有効化は plane/settings/spindd.py の ROOT_URLCONF = "plane.spindd_ext.urls" で行う。
 plane/urls.py の handler404 もそのまま引き継ぐ。
 """
 
@@ -20,5 +20,5 @@ from plane.urls import urlpatterns as plane_urlpatterns
 
 urlpatterns = [
     *plane_urlpatterns,
-    path("api/spindd/", include("spindd_ext.api.urls")),
+    path("api/spindd/", include("plane.spindd_ext.api.urls")),
 ]

@@ -21,12 +21,52 @@ import django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "plane.settings.spindd")
 django.setup()
 
-from plane.db.models import Project, ProjectMember, User, Workspace  # noqa: E402
-from spindd_ext.models import ConstructionProject  # noqa: E402
+from plane.db.models import (  # noqa: E402
+    Project,
+    ProjectIdentifier,
+    ProjectMember,
+    State,
+    User,
+    Workspace,
+)
+from plane.spindd_ext.models import ConstructionProject  # noqa: E402
 
 workspace = Workspace.objects.get(slug="spin-kensetsu")
 members = list(User.objects.filter(email__endswith="@spin-kensetsu.example"))
 lead = User.objects.get(email="yamada@spin-kensetsu.example")
+
+# poc/seed_construction.py と同じステータス体系を全現場に用意する。
+# Plane の本来の作成経路（app/views/project/base.py）は ProjectIdentifier と
+# 既定 State を作る。get_or_create だけだと State が 0 件の現場ができてしまい、
+# 課題を作れずボードもグループ無しで描画される。
+STATES = [
+    ("未着手", "unstarted", "#E0E0E0", True),
+    ("施工中", "started", "#3F76FF", False),
+    ("検査待ち", "started", "#F59E0B", False),
+    ("是正中", "started", "#EF4444", False),
+    ("完了", "completed", "#16A34A", False),
+    ("保留", "backlog", "#9CA3AF", False),
+]
+
+
+def ensure_project_scaffolding(project):
+    """Plane が本来作るものを補う（識別子の予約と既定ステータス）。"""
+    ProjectIdentifier.objects.get_or_create(
+        workspace=workspace, project=project, defaults={"name": project.identifier}
+    )
+    for seq, (name, group, color, is_default) in enumerate(STATES, start=1):
+        State.objects.get_or_create(
+            name=name,
+            project=project,
+            workspace=workspace,
+            defaults={
+                "group": group,
+                "color": color,
+                "sequence": seq * 15000,
+                "default": is_default,
+                "created_by": lead,
+            },
+        )
 
 # 台帳としての体裁を見るため、既存の 1 現場に加えて架空の 2 現場を足す。
 # いずれも架空。
@@ -99,17 +139,16 @@ LEDGER = [
 
 created = updated = 0
 for row in LEDGER:
-    project, _ = Project.objects.get_or_create(
+    project, project_created = Project.objects.get_or_create(
         workspace=workspace,
         identifier=row["identifier"],
-        defaults={
-            "name": row["name"],
-            "network": 2,
-            "timezone": "Asia/Tokyo",
-            "project_lead": lead,
-            "created_by": lead,
-        },
+        defaults={"name": row["name"], "network": 2, "timezone": "Asia/Tokyo", "project_lead": lead},
     )
+    if project_created:
+        # BaseModel.save() は crum.get_current_user() を見て created_by を上書きするため、
+        # スクリプト実行時は defaults に渡しても None になる。save() を経由せず入れる。
+        Project.objects.filter(pk=project.pk).update(created_by=lead)
+    ensure_project_scaffolding(project)
     # API の可視範囲は ProjectMember 経由で絞るため、台帳に出すには参加が必要。
     for member in members:
         ProjectMember.objects.get_or_create(

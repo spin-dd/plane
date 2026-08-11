@@ -109,7 +109,7 @@ CE の実装本体であり継ぎ目ではない。"extended" は「拡張サイ
 ### 継ぎ目の使い方: 実装は自パッケージ、継ぎ目は 1 行
 
 継ぎ目のファイルに実装を書くと、そのファイルがコンフリクト対象として育ってしまう。
-**実装は必ず `packages/spindd`（フロント）/ `apps/api/spindd_ext`（バックエンド）に置き、
+**実装は必ず `packages/spindd`（フロント）/ `apps/api/plane/spindd_ext`（バックエンド）に置き、
 継ぎ目には re-export の 1 行だけを書く。**
 
 ```ts
@@ -126,18 +126,29 @@ export { extendedRoutes } from "@plane/spindd/routes";
 
 ```python
 # apps/api/plane/settings/spindd.py
-INSTALLED_APPS += ("spindd_ext",)
-ROOT_URLCONF = "spindd_ext.urls"     # plane/urls.py を編集せずに URL を足せる
+INSTALLED_APPS += ("plane.spindd_ext",)
+ROOT_URLCONF = "plane.spindd_ext.urls"     # plane/urls.py を編集せずに URL を足せる
 ```
 
 ```python
-# apps/api/spindd_ext/urls.py（新規）
+# apps/api/plane/spindd_ext/urls.py（新規）
 from plane.urls import urlpatterns as plane_urlpatterns
 
-urlpatterns = [*plane_urlpatterns, path("api/spindd/", include("spindd_ext.api.urls"))]
+urlpatterns = [*plane_urlpatterns, path("api/spindd/", include("plane.spindd_ext.api.urls"))]
 ```
 
 独自アプリなので `migrations/` も自前で持て、§4 の連番衝突も起きない。
+
+**アプリは `plane` パッケージの内側に置くこと。** `apps/api/Dockerfile.api` は
+`COPY plane plane/` しかしないため、`plane` の外に置くと本番イメージに含まれず、
+`DJANGO_SETTINGS_MODULE=plane.settings.spindd` を有効にしたイメージが
+`ModuleNotFoundError` で起動不能になる（API 全体が落ちる）。
+
+**Plane の削除は soft delete である。** 独自モデルが Plane のモデルを FK で参照する場合、
+`plane.db.mixins.SoftDeleteModel` を継承して `deleted_at` を持たせる。
+`plane/bgtasks/deletion_task.py` は関連先に `deleted_at` がある場合だけ連鎖させるため、
+これが無いと現場を削除しても独自レコードが残り続け、OneToOne の枠と一意キーを
+占有したまま再登録できなくなる。一意制約も `condition=Q(deleted_at__isnull=True)` を付ける。
 
 ### 継ぎ目で足りない場合
 

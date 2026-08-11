@@ -31,11 +31,12 @@ x-spindd-mount: &spindd-mount
     source: ./apps/api/plane/settings/spindd.py
     target: /code/plane/settings/spindd.py
     read_only: true
-  # 独自 Django アプリ。plane パッケージの外に置いてあるので /code 直下にマウントする。
+  # 独自 Django アプリ。Dockerfile.api が `COPY plane plane/` しかしないため、
+  # plane パッケージの内側に置いてある（本番イメージに含めるために必須）。
   # makemigrations がホスト側に migrations を書き出せるよう読み書き可にしている。
   - type: bind
-    source: ./apps/api/spindd_ext
-    target: /code/spindd_ext
+    source: ./apps/api/plane/spindd_ext
+    target: /code/plane/spindd_ext
 
 services:
   api:

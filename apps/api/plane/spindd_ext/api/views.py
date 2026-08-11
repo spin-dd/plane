@@ -15,8 +15,13 @@ from rest_framework.response import Response
 from plane.app.permissions import WorkspaceEntityPermission
 from plane.app.views.base import BaseViewSet
 from plane.db.models import Project, ProjectMember
-from spindd_ext.api.serializers import ConstructionProjectSerializer
-from spindd_ext.models import ConstructionProject
+from plane.spindd_ext.api.serializers import ConstructionProjectSerializer
+from plane.spindd_ext.models import ConstructionProject
+
+# 台帳は 1 レスポンスで返す前提の画面だが、無制限だと現場数に比例して
+# レスポンスが膨らむ。既定で上限を設け、超えた分は truncated で明示する。
+LEDGER_DEFAULT_LIMIT = 200
+LEDGER_MAX_LIMIT = 1000
 
 
 class ConstructionProjectViewSet(BaseViewSet):
@@ -29,6 +34,12 @@ class ConstructionProjectViewSet(BaseViewSet):
     model = ConstructionProject
     serializer_class = ConstructionProjectSerializer
     permission_classes = [WorkspaceEntityPermission]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        # シリアライザ側で「URL のワークスペース配下か」を検証するために渡す。
+        context["workspace_slug"] = self.kwargs.get("slug")
+        return context
 
     def get_queryset(self):
         member_project_ids = ProjectMember.objects.filter(
@@ -46,22 +57,37 @@ class ConstructionProjectViewSet(BaseViewSet):
             .order_by("contract_number")
         )
 
-    def perform_create(self, serializer):
-        # 他ワークスペースの現場に紐づけられないよう検証する。
-        project = serializer.validated_data["project"]
-        if project.workspace.slug != self.kwargs["slug"]:
-            raise ValueError("project does not belong to this workspace")
-        serializer.save()
+    def _limit(self):
+        try:
+            limit = int(self.request.query_params.get("limit", LEDGER_DEFAULT_LIMIT))
+        except (TypeError, ValueError):
+            limit = LEDGER_DEFAULT_LIMIT
+        return max(1, min(limit, LEDGER_MAX_LIMIT))
+
+    def list(self, request, slug):
+        queryset = self.get_queryset()
+        total = queryset.count()
+        limit = self._limit()
+        rows = ConstructionProjectSerializer(queryset[:limit], many=True).data
+        return Response({"count": total, "truncated": total > limit, "results": rows})
 
     def ledger(self, request, slug):
-        """工事台帳（一覧）。集計値を添えて返す。"""
+        """工事台帳（一覧）。集計値を添えて返す。
+
+        合計はページングの影響を受けないよう DB 側で集計する。
+        """
+        from django.db.models import Sum
+
         queryset = self.get_queryset()
-        rows = ConstructionProjectSerializer(queryset, many=True).data
-        total = sum(r["contract_amount"] or 0 for r in rows)
+        total = queryset.count()
+        total_amount = queryset.aggregate(total=Sum("contract_amount"))["total"] or 0
+        limit = self._limit()
+        rows = ConstructionProjectSerializer(queryset[:limit], many=True).data
         return Response(
             {
-                "count": len(rows),
-                "total_contract_amount": total,
+                "count": total,
+                "truncated": total > limit,
+                "total_contract_amount": total_amount,
                 "results": rows,
             }
         )
@@ -78,8 +104,14 @@ class UnregisteredProjectListEndpoint(BaseViewSet):
             workspace__slug=slug, member=request.user, is_active=True
         ).values_list("project_id", flat=True)
 
+        # soft delete された工事情報は「未登録」として扱う（default manager が除外する）。
+        registered_project_ids = ConstructionProject.objects.filter(
+            project__workspace__slug=slug
+        ).values_list("project_id", flat=True)
+
         projects = (
-            Project.objects.filter(workspace__slug=slug, id__in=member_project_ids, spindd_construction__isnull=True)
+            Project.objects.filter(workspace__slug=slug, id__in=member_project_ids)
+            .exclude(id__in=registered_project_ids)
             .values("id", "name", "identifier")
             .order_by("name")
         )

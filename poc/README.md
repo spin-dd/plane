@@ -96,6 +96,9 @@ docker compose --project-name plane-poc --env-file poc/.env --project-directory 
 ```
 
 API は `/api/spindd/workspaces/spin-kensetsu/construction-ledger/`。
+**入力手段は現状 API のみ。** Plane は `django.contrib.admin` を `INSTALLED_APPS` に
+含めておらず `admin/` の URL も無いため、Django admin は使えない。
+
 画面は `/<workspaceSlug>/construction-ledger`（**フロントは dev サーバでのみ確認できる**。
 リリース済みイメージには `@plane/spindd` が含まれていない）。
 

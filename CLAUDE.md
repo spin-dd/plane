@@ -25,7 +25,7 @@ fork であり、日本の建設企業向け社内課題管理システムとし
 4. **拡張の継ぎ目（空スタブ）を使う。実装は継ぎ目に書かない。**
    CE は空のスタブを置き EE が実装で置き換える設計になっている。本体が空のものが 7 箇所ある
    （`app/routes/extended.ts`、`use-workspace-issue-properties-extended.tsx` など。一覧は
-   `CONTRIBUTING.spindd.md` §3）。実装は `packages/spindd` / `apps/api/spindd_ext` に置き、
+   `CONTRIBUTING.spindd.md` §3）。実装は `packages/spindd` / `apps/api/plane/spindd_ext` に置き、
    継ぎ目には re-export の 1 行だけを書く。
    `ExtendedProjectSidebar` などは CE の実装本体で継ぎ目ではない。**エクスポートされた本体が
    空かどうか**で判断する。

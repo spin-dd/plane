@@ -13,10 +13,19 @@ Plane 側のテーブルに列を足すのではなく、独立したテーブ�
 """
 
 from django.db import models
+from django.db.models import Q
+
+from plane.db.mixins import SoftDeleteModel
 
 
-class ConstructionProject(models.Model):
-    """現場（Plane の Project）に対応する工事情報。"""
+class ConstructionProject(SoftDeleteModel):
+    """現場（Plane の Project）に対応する工事情報。
+
+    SoftDeleteModel を継承しているのは、Plane の削除が soft delete だからである。
+    `plane/bgtasks/deletion_task.py` は 1 対 1 の関連先に `deleted_at` がある場合だけ
+    連鎖させる。この属性が無いと、現場を削除しても工事情報が残り続け、
+    OneToOne の枠と工事番号を占有したまま復活できなくなる。
+    """
 
     class ContractType(models.TextChoices):
         LUMP_SUM = "lump_sum", "総価請負"
@@ -29,9 +38,17 @@ class ConstructionProject(models.Model):
         related_name="spindd_construction",
         verbose_name="現場",
     )
+    # project.workspace から辿れるが、工事番号の一意制約をワークスペース単位に
+    # 掛けるために非正規化して持つ。制約式でリレーションを辿れないため。
+    workspace = models.ForeignKey(
+        "db.Workspace",
+        on_delete=models.CASCADE,
+        related_name="spindd_construction_projects",
+        verbose_name="ワークスペース",
+    )
 
     # 識別
-    contract_number = models.CharField("工事番号", max_length=64, unique=True)
+    contract_number = models.CharField("工事番号", max_length=64)
     official_name = models.CharField("工事名称", max_length=255, blank=True)
 
     # 発注者・場所
@@ -72,9 +89,27 @@ class ConstructionProject(models.Model):
         verbose_name = "工事情報"
         verbose_name_plural = "工事情報"
         ordering = ("contract_number",)
+        constraints = [
+            # 工事番号はワークスペース単位で一意。グローバル一意にすると、
+            # 他社（他ワークスペース）が同じ番号を使えなくなるうえ、
+            # IntegrityError の有無から他テナントの工事番号を推測できてしまう。
+            # soft delete された行は除外する（Plane の既存モデルと同じ書き方）。
+            models.UniqueConstraint(
+                fields=["workspace", "contract_number"],
+                condition=Q(deleted_at__isnull=True),
+                name="spindd_construction_unique_contract_number_per_workspace",
+            )
+        ]
 
     def __str__(self):
         return f"{self.contract_number} {self.official_name or self.project_id}"
+
+    def save(self, *args, **kwargs):
+        # workspace は project から導出する。呼び出し側に指定させると
+        # project と食い違った値を入れられる余地が残るため。
+        if self.project_id:
+            self.workspace_id = self.project.workspace_id
+        super().save(*args, **kwargs)
 
     @property
     def is_completed(self):
