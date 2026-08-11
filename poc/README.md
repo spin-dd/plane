@@ -81,7 +81,7 @@ docker compose --project-name plane-poc --env-file poc/.env --project-directory 
 
 ### 工事台帳（spindd_ext）
 
-独自 Django アプリのマイグレーションを流し、架空の工事情報 3 件を投入する。
+独自 Django アプリのマイグレーションを流し、架空の工事情報 4 件を投入する。
 
 ```bash
 docker compose --project-name plane-poc --env-file poc/.env --project-directory . \
