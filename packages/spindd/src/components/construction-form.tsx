@@ -7,7 +7,7 @@
  */
 
 import { useState } from "react";
-import type { FormEvent } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import type {
   TConstructionProject,
   TConstructionProjectPayload,
@@ -20,6 +20,48 @@ const CONTRACT_TYPES: { value: TContractType; label: string }[] = [
   { value: "unit_price", label: "単価契約" },
   { value: "cost_plus_fee", label: "実費精算" },
 ];
+
+/** フォームの入力値。すべて文字列で保持し、送信時に型を戻す。 */
+type FormState = {
+  projectId: string;
+  contractNumber: string;
+  officialName: string;
+  clientName: string;
+  siteAddress: string;
+  buildingUse: string;
+  structure: string;
+  totalFloorArea: string;
+  contractType: string;
+  contractAmount: string;
+  contractDate: string;
+  start: string;
+  end: string;
+  actual: string;
+  siteAgent: string;
+  chiefEngineer: string;
+  remarks: string;
+};
+
+const initialState = (initial: TConstructionProject | undefined, unregistered: TUnregisteredProject[]): FormState => ({
+  projectId: initial?.project ?? unregistered[0]?.id ?? "",
+  contractNumber: initial?.contract_number ?? "",
+  officialName: initial?.official_name ?? "",
+  clientName: initial?.client_name ?? "",
+  siteAddress: initial?.site_address ?? "",
+  buildingUse: initial?.building_use ?? "",
+  structure: initial?.structure ?? "",
+  totalFloorArea: initial?.total_floor_area ?? "",
+  contractType: initial?.contract_type ?? "lump_sum",
+  contractAmount:
+    initial?.contract_amount === null || initial?.contract_amount === undefined ? "" : String(initial.contract_amount),
+  contractDate: initial?.contract_date ?? "",
+  start: initial?.construction_start ?? "",
+  end: initial?.construction_end ?? "",
+  actual: initial?.actual_completion ?? "",
+  siteAgent: initial?.site_agent ?? "",
+  chiefEngineer: initial?.chief_engineer ?? "",
+  remarks: initial?.remarks ?? "",
+});
 
 type Props = {
   /** 編集対象。未指定なら新規登録。 */
@@ -54,25 +96,12 @@ const toDateOrNull = (value: string): string | null => (value === "" ? null : va
 export function ConstructionForm({ initial, unregistered, onSubmit, onCancel }: Props) {
   const isEdit = initial !== undefined;
 
-  const [projectId, setProjectId] = useState(initial?.project ?? unregistered[0]?.id ?? "");
-  const [contractNumber, setContractNumber] = useState(initial?.contract_number ?? "");
-  const [officialName, setOfficialName] = useState(initial?.official_name ?? "");
-  const [clientName, setClientName] = useState(initial?.client_name ?? "");
-  const [siteAddress, setSiteAddress] = useState(initial?.site_address ?? "");
-  const [buildingUse, setBuildingUse] = useState(initial?.building_use ?? "");
-  const [structure, setStructure] = useState(initial?.structure ?? "");
-  const [totalFloorArea, setTotalFloorArea] = useState(initial?.total_floor_area ?? "");
-  const [contractType, setContractType] = useState<TContractType>(initial?.contract_type ?? "lump_sum");
-  const [contractAmount, setContractAmount] = useState(
-    initial?.contract_amount === null || initial?.contract_amount === undefined ? "" : String(initial.contract_amount)
-  );
-  const [contractDate, setContractDate] = useState(initial?.contract_date ?? "");
-  const [start, setStart] = useState(initial?.construction_start ?? "");
-  const [end, setEnd] = useState(initial?.construction_end ?? "");
-  const [actual, setActual] = useState(initial?.actual_completion ?? "");
-  const [siteAgent, setSiteAgent] = useState(initial?.site_agent ?? "");
-  const [chiefEngineer, setChiefEngineer] = useState(initial?.chief_engineer ?? "");
-  const [remarks, setRemarks] = useState(initial?.remarks ?? "");
+  // 17 個の useState を 1 つに畳んでいる。フィールドが増えても
+  // 呼び出し側の再レンダリング単位が変わらず、初期値の組み立ても 1 箇所に収まる。
+  const [form, setForm] = useState<FormState>(() => initialState(initial, unregistered));
+  const set =
+    (key: keyof FormState) => (event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
+      setForm((prev) => ({ ...prev, [key]: event.target.value }));
 
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
@@ -83,25 +112,25 @@ export function ConstructionForm({ initial, unregistered, onSubmit, onCancel }: 
     setErrors({});
 
     const payload: TConstructionProjectPayload = {
-      contract_number: contractNumber.trim(),
-      official_name: officialName.trim(),
-      client_name: clientName.trim(),
-      site_address: siteAddress.trim(),
-      building_use: buildingUse.trim(),
-      structure: structure.trim(),
-      total_floor_area: totalFloorArea === "" ? null : totalFloorArea,
-      contract_type: contractType,
-      contract_amount: toIntOrNull(contractAmount),
-      contract_date: toDateOrNull(contractDate),
-      construction_start: toDateOrNull(start),
-      construction_end: toDateOrNull(end),
-      actual_completion: toDateOrNull(actual),
-      site_agent: siteAgent.trim(),
-      chief_engineer: chiefEngineer.trim(),
-      remarks: remarks.trim(),
+      contract_number: form.contractNumber.trim(),
+      official_name: form.officialName.trim(),
+      client_name: form.clientName.trim(),
+      site_address: form.siteAddress.trim(),
+      building_use: form.buildingUse.trim(),
+      structure: form.structure.trim(),
+      total_floor_area: form.totalFloorArea === "" ? null : form.totalFloorArea,
+      contract_type: form.contractType as TContractType,
+      contract_amount: toIntOrNull(form.contractAmount),
+      contract_date: toDateOrNull(form.contractDate),
+      construction_start: toDateOrNull(form.start),
+      construction_end: toDateOrNull(form.end),
+      actual_completion: toDateOrNull(form.actual),
+      site_agent: form.siteAgent.trim(),
+      chief_engineer: form.chiefEngineer.trim(),
+      remarks: form.remarks.trim(),
     };
     // 作成時のみ現場を送る。編集時に送るとサーバ側で read-only として無視される。
-    if (!isEdit) payload.project = projectId;
+    if (!isEdit) payload.project = form.projectId;
 
     try {
       await onSubmit(payload);
@@ -125,7 +154,7 @@ export function ConstructionForm({ initial, unregistered, onSubmit, onCancel }: 
   const fieldError = (name: string) =>
     errors[name] ? <p className="mt-1 text-11 text-danger-primary">{errors[name].join(" ")}</p> : null;
 
-  const canSubmit = !submitting && contractNumber.trim() !== "" && (isEdit || projectId !== "");
+  const canSubmit = !submitting && form.contractNumber.trim() !== "" && (isEdit || form.projectId !== "");
 
   return (
     <form onSubmit={handleSubmit} className="flex max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden">
@@ -149,7 +178,7 @@ export function ConstructionForm({ initial, unregistered, onSubmit, onCancel }: 
             ) : unregistered.length === 0 ? (
               <p className="text-13 text-tertiary">工事情報が未登録の現場がありません。先に現場を作成してください。</p>
             ) : (
-              <select className={field} value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+              <select className={field} value={form.projectId} onChange={set("projectId")}>
                 {unregistered.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.identifier} {p.name}
@@ -167,8 +196,8 @@ export function ConstructionForm({ initial, unregistered, onSubmit, onCancel }: 
             <input
               id="spindd-contract-number"
               className={field}
-              value={contractNumber}
-              onChange={(e) => setContractNumber(e.target.value)}
+              value={form.contractNumber}
+              onChange={set("contractNumber")}
               placeholder="26-A-0147"
             />
             {fieldError("contract_number")}
@@ -178,12 +207,7 @@ export function ConstructionForm({ initial, unregistered, onSubmit, onCancel }: 
             <label className={label} htmlFor="spindd-client">
               発注者
             </label>
-            <input
-              id="spindd-client"
-              className={field}
-              value={clientName}
-              onChange={(e) => setClientName(e.target.value)}
-            />
+            <input id="spindd-client" className={field} value={form.clientName} onChange={set("clientName")} />
             {fieldError("client_name")}
           </div>
 
@@ -194,8 +218,8 @@ export function ConstructionForm({ initial, unregistered, onSubmit, onCancel }: 
             <input
               id="spindd-official-name"
               className={field}
-              value={officialName}
-              onChange={(e) => setOfficialName(e.target.value)}
+              value={form.officialName}
+              onChange={set("officialName")}
             />
             {fieldError("official_name")}
           </div>
@@ -204,12 +228,7 @@ export function ConstructionForm({ initial, unregistered, onSubmit, onCancel }: 
             <label className={label} htmlFor="spindd-address">
               工事場所
             </label>
-            <input
-              id="spindd-address"
-              className={field}
-              value={siteAddress}
-              onChange={(e) => setSiteAddress(e.target.value)}
-            />
+            <input id="spindd-address" className={field} value={form.siteAddress} onChange={set("siteAddress")} />
             {fieldError("site_address")}
           </div>
 
@@ -217,12 +236,7 @@ export function ConstructionForm({ initial, unregistered, onSubmit, onCancel }: 
             <label className={label} htmlFor="spindd-use">
               用途
             </label>
-            <input
-              id="spindd-use"
-              className={field}
-              value={buildingUse}
-              onChange={(e) => setBuildingUse(e.target.value)}
-            />
+            <input id="spindd-use" className={field} value={form.buildingUse} onChange={set("buildingUse")} />
           </div>
 
           <div>
@@ -232,8 +246,8 @@ export function ConstructionForm({ initial, unregistered, onSubmit, onCancel }: 
             <input
               id="spindd-structure"
               className={field}
-              value={structure}
-              onChange={(e) => setStructure(e.target.value)}
+              value={form.structure}
+              onChange={set("structure")}
               placeholder="S造 地下1階 地上8階"
             />
           </div>
@@ -245,8 +259,8 @@ export function ConstructionForm({ initial, unregistered, onSubmit, onCancel }: 
             <input
               id="spindd-area"
               className={field}
-              value={totalFloorArea ?? ""}
-              onChange={(e) => setTotalFloorArea(e.target.value)}
+              value={form.totalFloorArea}
+              onChange={set("totalFloorArea")}
               inputMode="decimal"
               placeholder="18450.00"
             />
@@ -260,8 +274,8 @@ export function ConstructionForm({ initial, unregistered, onSubmit, onCancel }: 
             <select
               id="spindd-contract-type"
               className={field}
-              value={contractType}
-              onChange={(e) => setContractType(e.target.value as TContractType)}
+              value={form.contractType}
+              onChange={set("contractType")}
             >
               {CONTRACT_TYPES.map((t) => (
                 <option key={t.value} value={t.value}>
@@ -278,15 +292,15 @@ export function ConstructionForm({ initial, unregistered, onSubmit, onCancel }: 
             <input
               id="spindd-amount"
               className={field}
-              value={contractAmount}
-              onChange={(e) => setContractAmount(e.target.value)}
+              value={form.contractAmount}
+              onChange={set("contractAmount")}
               inputMode="numeric"
               placeholder="4820000000"
             />
             <p className="mt-1 text-11 text-tertiary">
-              {toIntOrNull(contractAmount) === null
+              {toIntOrNull(form.contractAmount) === null
                 ? "未入力"
-                : `${toIntOrNull(contractAmount)?.toLocaleString("ja-JP")} 円`}
+                : `${toIntOrNull(form.contractAmount)?.toLocaleString("ja-JP")} 円`}
             </p>
             {fieldError("contract_amount")}
           </div>
@@ -299,8 +313,8 @@ export function ConstructionForm({ initial, unregistered, onSubmit, onCancel }: 
               id="spindd-contract-date"
               type="date"
               className={field}
-              value={contractDate ?? ""}
-              onChange={(e) => setContractDate(e.target.value)}
+              value={form.contractDate}
+              onChange={set("contractDate")}
             />
           </div>
 
@@ -308,39 +322,21 @@ export function ConstructionForm({ initial, unregistered, onSubmit, onCancel }: 
             <label className={label} htmlFor="spindd-start">
               着工日
             </label>
-            <input
-              id="spindd-start"
-              type="date"
-              className={field}
-              value={start ?? ""}
-              onChange={(e) => setStart(e.target.value)}
-            />
+            <input id="spindd-start" type="date" className={field} value={form.start} onChange={set("start")} />
           </div>
 
           <div>
             <label className={label} htmlFor="spindd-end">
               竣工予定日
             </label>
-            <input
-              id="spindd-end"
-              type="date"
-              className={field}
-              value={end ?? ""}
-              onChange={(e) => setEnd(e.target.value)}
-            />
+            <input id="spindd-end" type="date" className={field} value={form.end} onChange={set("end")} />
           </div>
 
           <div>
             <label className={label} htmlFor="spindd-actual">
               実竣工日
             </label>
-            <input
-              id="spindd-actual"
-              type="date"
-              className={field}
-              value={actual ?? ""}
-              onChange={(e) => setActual(e.target.value)}
-            />
+            <input id="spindd-actual" type="date" className={field} value={form.actual} onChange={set("actual")} />
             <p className="mt-1 text-11 text-tertiary">入力すると台帳で「竣工」として扱われます。</p>
           </div>
 
@@ -348,24 +344,14 @@ export function ConstructionForm({ initial, unregistered, onSubmit, onCancel }: 
             <label className={label} htmlFor="spindd-agent">
               現場代理人
             </label>
-            <input
-              id="spindd-agent"
-              className={field}
-              value={siteAgent}
-              onChange={(e) => setSiteAgent(e.target.value)}
-            />
+            <input id="spindd-agent" className={field} value={form.siteAgent} onChange={set("siteAgent")} />
           </div>
 
           <div>
             <label className={label} htmlFor="spindd-engineer">
               監理技術者・主任技術者
             </label>
-            <input
-              id="spindd-engineer"
-              className={field}
-              value={chiefEngineer}
-              onChange={(e) => setChiefEngineer(e.target.value)}
-            />
+            <input id="spindd-engineer" className={field} value={form.chiefEngineer} onChange={set("chiefEngineer")} />
           </div>
 
           <div className="sm:col-span-2">
@@ -375,8 +361,8 @@ export function ConstructionForm({ initial, unregistered, onSubmit, onCancel }: 
             <textarea
               id="spindd-remarks"
               className={`${field} min-h-[72px]`}
-              value={remarks}
-              onChange={(e) => setRemarks(e.target.value)}
+              value={form.remarks}
+              onChange={set("remarks")}
             />
           </div>
         </div>

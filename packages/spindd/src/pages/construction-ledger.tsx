@@ -130,7 +130,8 @@ export default function ConstructionLedgerPage() {
                 <th className="px-4 py-2 font-medium whitespace-nowrap">工期</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">現場代理人</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">状態</th>
-                <th className="px-4 py-2 whitespace-nowrap" />
+                {/* 空の th はスクリーンリーダーに名前が無い列として読まれるため、見出しを持たせる */}
+                <th className="px-4 py-2 font-medium whitespace-nowrap">操作</th>
               </tr>
             </thead>
             <tbody>
