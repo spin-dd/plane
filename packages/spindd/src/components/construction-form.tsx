@@ -7,7 +7,7 @@
  */
 
 import { useState } from "react";
-import type { ChangeEvent, FormEvent } from "react";
+import type { ChangeEvent, FormEvent, ReactNode } from "react";
 import type {
   TConstructionProject,
   TConstructionProjectPayload,
@@ -20,6 +20,9 @@ const CONTRACT_TYPES: { value: TContractType; label: string }[] = [
   { value: "unit_price", label: "単価契約" },
   { value: "cost_plus_fee", label: "実費精算" },
 ];
+
+const CONTROL = "w-full rounded-md border border-subtle bg-surface-1 px-2.5 py-1.5 text-13 outline-none";
+const LABEL = "mb-1 block text-11 text-tertiary";
 
 /** フォームの入力値。すべて文字列で保持し、送信時に型を戻す。 */
 type FormState = {
@@ -40,6 +43,27 @@ type FormState = {
   siteAgent: string;
   chiefEngineer: string;
   remarks: string;
+};
+
+/** FormState のキーから API のフィールド名へ。エラー表示の対応付けに使う。 */
+const FIELD_TO_API: Record<keyof FormState, string> = {
+  projectId: "project",
+  contractNumber: "contract_number",
+  officialName: "official_name",
+  clientName: "client_name",
+  siteAddress: "site_address",
+  buildingUse: "building_use",
+  structure: "structure",
+  totalFloorArea: "total_floor_area",
+  contractType: "contract_type",
+  contractAmount: "contract_amount",
+  contractDate: "contract_date",
+  start: "construction_start",
+  end: "construction_end",
+  actual: "actual_completion",
+  siteAgent: "site_agent",
+  chiefEngineer: "chief_engineer",
+  remarks: "remarks",
 };
 
 const initialState = (initial: TConstructionProject | undefined, unregistered: TUnregisteredProject[]): FormState => ({
@@ -63,18 +87,6 @@ const initialState = (initial: TConstructionProject | undefined, unregistered: T
   remarks: initial?.remarks ?? "",
 });
 
-type Props = {
-  /** 編集対象。未指定なら新規登録。 */
-  initial?: TConstructionProject;
-  /** 新規登録時に選べる現場（工事情報が未登録のもの）。 */
-  unregistered: TUnregisteredProject[];
-  onSubmit: (payload: TConstructionProjectPayload) => Promise<void>;
-  onCancel: () => void;
-};
-
-const field = "w-full rounded-md border border-subtle bg-surface-1 px-2.5 py-1.5 text-13 outline-none";
-const label = "mb-1 block text-11 text-tertiary";
-
 /** 数値入力を整数に落とす。空文字は null（未入力）として送る。 */
 const toIntOrNull = (value: string): number | null => {
   const digits = value.replace(/[^\d-]/g, "");
@@ -86,6 +98,90 @@ const toIntOrNull = (value: string): number | null => {
 /** 日付入力を YYYY-MM-DD か null に落とす。 */
 const toDateOrNull = (value: string): string | null => (value === "" ? null : value);
 
+type FieldErrors = Record<string, string[]>;
+
+/** ラベル・入力・補助テキスト・エラーの並びを 1 箇所に集約する。 */
+function Field(props: {
+  id: string;
+  label: string;
+  required?: boolean;
+  errors?: string[];
+  hint?: ReactNode;
+  span2?: boolean;
+  children: ReactNode;
+}) {
+  const { id, label, required, errors, hint, span2, children } = props;
+  return (
+    <div className={span2 ? "sm:col-span-2" : undefined}>
+      <label className={LABEL} id={`${id}-label`} htmlFor={id}>
+        {label}
+        {required ? <span className="text-danger-primary"> *</span> : null}
+      </label>
+      {children}
+      {hint ? <p className="mt-1 text-11 text-tertiary">{hint}</p> : null}
+      {errors ? <p className="mt-1 text-11 text-danger-primary">{errors.join(" ")}</p> : null}
+    </div>
+  );
+}
+
+/**
+ * 現場の選択。
+ *
+ * 編集時と候補ゼロ件のときは control を出さないので、見出しは span にする
+ * （存在しない control を指す label を作らない）。
+ */
+function ProjectPicker(props: {
+  isEdit: boolean;
+  initial?: TConstructionProject;
+  unregistered: TUnregisteredProject[];
+  value: string;
+  onChange: (event: ChangeEvent<HTMLSelectElement>) => void;
+  errors?: string[];
+}) {
+  const { isEdit, initial, unregistered, value, onChange, errors } = props;
+  const hasControl = !isEdit && unregistered.length > 0;
+
+  return (
+    <div className="sm:col-span-2">
+      {hasControl ? (
+        <label className={LABEL} htmlFor="spindd-project">
+          現場
+        </label>
+      ) : (
+        <span className={LABEL}>現場</span>
+      )}
+
+      {isEdit && initial ? (
+        <p className="text-13 text-secondary">
+          {initial.project_identifier} {initial.project_name}
+          <span className="ml-2 text-11 text-tertiary">（登録後は変更できません）</span>
+        </p>
+      ) : unregistered.length === 0 ? (
+        <p className="text-13 text-tertiary">工事情報が未登録の現場がありません。先に現場を作成してください。</p>
+      ) : (
+        <select id="spindd-project" className={CONTROL} value={value} onChange={onChange}>
+          {unregistered.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.identifier} {p.name}
+            </option>
+          ))}
+        </select>
+      )}
+
+      {errors ? <p className="mt-1 text-11 text-danger-primary">{errors.join(" ")}</p> : null}
+    </div>
+  );
+}
+
+type Props = {
+  /** 編集対象。未指定なら新規登録。 */
+  initial?: TConstructionProject;
+  /** 新規登録時に選べる現場（工事情報が未登録のもの）。 */
+  unregistered: TUnregisteredProject[];
+  onSubmit: (payload: TConstructionProjectPayload) => Promise<void>;
+  onCancel: () => void;
+};
+
 /**
  * 工事情報の登録・編集フォーム。
  *
@@ -96,15 +192,15 @@ const toDateOrNull = (value: string): string | null => (value === "" ? null : va
 export function ConstructionForm({ initial, unregistered, onSubmit, onCancel }: Props) {
   const isEdit = initial !== undefined;
 
-  // 17 個の useState を 1 つに畳んでいる。フィールドが増えても
-  // 呼び出し側の再レンダリング単位が変わらず、初期値の組み立ても 1 箇所に収まる。
+  // フィールドごとに useState を並べず 1 つに畳んでいる。
+  // 初期値の組み立ても initialState() の 1 箇所に収まる。
   const [form, setForm] = useState<FormState>(() => initialState(initial, unregistered));
   const set =
     (key: keyof FormState) => (event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
       setForm((prev) => ({ ...prev, [key]: event.target.value }));
 
   const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string[]>>({});
+  const [errors, setErrors] = useState<FieldErrors>({});
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -138,7 +234,7 @@ export function ConstructionForm({ initial, unregistered, onSubmit, onCancel }: 
       // DRF は {field: ["message"]} 形式で返す。表示できる形だけ拾う。
       const data = (error as { response?: { data?: unknown } })?.response?.data;
       if (data && typeof data === "object") {
-        const normalized: Record<string, string[]> = {};
+        const normalized: FieldErrors = {};
         for (const [key, value] of Object.entries(data as Record<string, unknown>)) {
           normalized[key] = Array.isArray(value) ? value.map(String) : [String(value)];
         }
@@ -151,10 +247,46 @@ export function ConstructionForm({ initial, unregistered, onSubmit, onCancel }: 
     }
   };
 
-  const fieldError = (name: string) =>
-    errors[name] ? <p className="mt-1 text-11 text-danger-primary">{errors[name].join(" ")}</p> : null;
+  /** 単純なテキスト / 日付入力。16 個の繰り返しを 1 行に畳む。 */
+  const text = (
+    key: keyof FormState,
+    labelText: string,
+    opts: {
+      type?: string;
+      placeholder?: string;
+      hint?: ReactNode;
+      span2?: boolean;
+      required?: boolean;
+      numeric?: boolean;
+    } = {}
+  ) => {
+    const id = `spindd-${key}`;
+    return (
+      <Field
+        id={id}
+        label={labelText}
+        required={opts.required}
+        errors={errors[FIELD_TO_API[key]]}
+        hint={opts.hint}
+        span2={opts.span2}
+      >
+        <input
+          id={id}
+          aria-labelledby={`${id}-label`}
+          type={opts.type}
+          className={CONTROL}
+          value={form[key]}
+          onChange={set(key)}
+          placeholder={opts.placeholder}
+          inputMode={opts.numeric ? "numeric" : undefined}
+        />
+      </Field>
+    );
+  };
 
   const canSubmit = !submitting && form.contractNumber.trim() !== "" && (isEdit || form.projectId !== "");
+  const amount = toIntOrNull(form.contractAmount);
+  const amountPreview = amount === null ? "未入力" : `${amount.toLocaleString("ja-JP")} 円`;
 
   return (
     <form onSubmit={handleSubmit} className="flex max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden">
@@ -168,112 +300,28 @@ export function ConstructionForm({ initial, unregistered, onSubmit, onCancel }: 
         ) : null}
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="sm:col-span-2">
-            <span className={label}>現場</span>
-            {isEdit ? (
-              <p className="text-13 text-secondary">
-                {initial.project_identifier} {initial.project_name}
-                <span className="ml-2 text-11 text-tertiary">（登録後は変更できません）</span>
-              </p>
-            ) : unregistered.length === 0 ? (
-              <p className="text-13 text-tertiary">工事情報が未登録の現場がありません。先に現場を作成してください。</p>
-            ) : (
-              <select className={field} value={form.projectId} onChange={set("projectId")}>
-                {unregistered.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.identifier} {p.name}
-                  </option>
-                ))}
-              </select>
-            )}
-            {fieldError("project")}
-          </div>
+          <ProjectPicker
+            isEdit={isEdit}
+            initial={initial}
+            unregistered={unregistered}
+            value={form.projectId}
+            onChange={set("projectId")}
+            errors={errors.project}
+          />
 
-          <div>
-            <label className={label} htmlFor="spindd-contract-number">
-              工事番号 <span className="text-danger-primary">*</span>
-            </label>
-            <input
-              id="spindd-contract-number"
-              className={field}
-              value={form.contractNumber}
-              onChange={set("contractNumber")}
-              placeholder="26-A-0147"
-            />
-            {fieldError("contract_number")}
-          </div>
+          {text("contractNumber", "工事番号", { placeholder: "26-A-0147", required: true })}
+          {text("clientName", "発注者")}
+          {text("officialName", "工事名称", { span2: true })}
+          {text("siteAddress", "工事場所", { span2: true })}
+          {text("buildingUse", "用途")}
+          {text("structure", "構造・規模", { placeholder: "S造 地下1階 地上8階" })}
+          {text("totalFloorArea", "延床面積（m²）", { placeholder: "18450.00" })}
 
-          <div>
-            <label className={label} htmlFor="spindd-client">
-              発注者
-            </label>
-            <input id="spindd-client" className={field} value={form.clientName} onChange={set("clientName")} />
-            {fieldError("client_name")}
-          </div>
-
-          <div className="sm:col-span-2">
-            <label className={label} htmlFor="spindd-official-name">
-              工事名称
-            </label>
-            <input
-              id="spindd-official-name"
-              className={field}
-              value={form.officialName}
-              onChange={set("officialName")}
-            />
-            {fieldError("official_name")}
-          </div>
-
-          <div className="sm:col-span-2">
-            <label className={label} htmlFor="spindd-address">
-              工事場所
-            </label>
-            <input id="spindd-address" className={field} value={form.siteAddress} onChange={set("siteAddress")} />
-            {fieldError("site_address")}
-          </div>
-
-          <div>
-            <label className={label} htmlFor="spindd-use">
-              用途
-            </label>
-            <input id="spindd-use" className={field} value={form.buildingUse} onChange={set("buildingUse")} />
-          </div>
-
-          <div>
-            <label className={label} htmlFor="spindd-structure">
-              構造・規模
-            </label>
-            <input
-              id="spindd-structure"
-              className={field}
-              value={form.structure}
-              onChange={set("structure")}
-              placeholder="S造 地下1階 地上8階"
-            />
-          </div>
-
-          <div>
-            <label className={label} htmlFor="spindd-area">
-              延床面積（m²）
-            </label>
-            <input
-              id="spindd-area"
-              className={field}
-              value={form.totalFloorArea}
-              onChange={set("totalFloorArea")}
-              inputMode="decimal"
-              placeholder="18450.00"
-            />
-            {fieldError("total_floor_area")}
-          </div>
-
-          <div>
-            <label className={label} htmlFor="spindd-contract-type">
-              契約形態
-            </label>
+          <Field id="spindd-contractType" label="契約形態" errors={errors.contract_type}>
             <select
-              id="spindd-contract-type"
-              className={field}
+              id="spindd-contractType"
+              aria-labelledby="spindd-contractType-label"
+              className={CONTROL}
               value={form.contractType}
               onChange={set("contractType")}
             >
@@ -283,88 +331,29 @@ export function ConstructionForm({ initial, unregistered, onSubmit, onCancel }: 
                 </option>
               ))}
             </select>
-          </div>
+          </Field>
 
-          <div>
-            <label className={label} htmlFor="spindd-amount">
-              請負金額（円）
-            </label>
-            <input
-              id="spindd-amount"
-              className={field}
-              value={form.contractAmount}
-              onChange={set("contractAmount")}
-              inputMode="numeric"
-              placeholder="4820000000"
-            />
-            <p className="mt-1 text-11 text-tertiary">
-              {toIntOrNull(form.contractAmount) === null
-                ? "未入力"
-                : `${toIntOrNull(form.contractAmount)?.toLocaleString("ja-JP")} 円`}
-            </p>
-            {fieldError("contract_amount")}
-          </div>
+          {text("contractAmount", "請負金額（円）", {
+            placeholder: "4820000000",
+            hint: amountPreview,
+            numeric: true,
+          })}
+          {text("contractDate", "契約日", { type: "date" })}
+          {text("start", "着工日", { type: "date" })}
+          {text("end", "竣工予定日", { type: "date" })}
+          {text("actual", "実竣工日", { type: "date", hint: "入力すると台帳で「竣工」として扱われます。" })}
+          {text("siteAgent", "現場代理人")}
+          {text("chiefEngineer", "監理技術者・主任技術者")}
 
-          <div>
-            <label className={label} htmlFor="spindd-contract-date">
-              契約日
-            </label>
-            <input
-              id="spindd-contract-date"
-              type="date"
-              className={field}
-              value={form.contractDate}
-              onChange={set("contractDate")}
-            />
-          </div>
-
-          <div>
-            <label className={label} htmlFor="spindd-start">
-              着工日
-            </label>
-            <input id="spindd-start" type="date" className={field} value={form.start} onChange={set("start")} />
-          </div>
-
-          <div>
-            <label className={label} htmlFor="spindd-end">
-              竣工予定日
-            </label>
-            <input id="spindd-end" type="date" className={field} value={form.end} onChange={set("end")} />
-          </div>
-
-          <div>
-            <label className={label} htmlFor="spindd-actual">
-              実竣工日
-            </label>
-            <input id="spindd-actual" type="date" className={field} value={form.actual} onChange={set("actual")} />
-            <p className="mt-1 text-11 text-tertiary">入力すると台帳で「竣工」として扱われます。</p>
-          </div>
-
-          <div>
-            <label className={label} htmlFor="spindd-agent">
-              現場代理人
-            </label>
-            <input id="spindd-agent" className={field} value={form.siteAgent} onChange={set("siteAgent")} />
-          </div>
-
-          <div>
-            <label className={label} htmlFor="spindd-engineer">
-              監理技術者・主任技術者
-            </label>
-            <input id="spindd-engineer" className={field} value={form.chiefEngineer} onChange={set("chiefEngineer")} />
-          </div>
-
-          <div className="sm:col-span-2">
-            <label className={label} htmlFor="spindd-remarks">
-              備考
-            </label>
+          <Field id="spindd-remarks" label="備考" span2 errors={errors.remarks}>
             <textarea
               id="spindd-remarks"
-              className={`${field} min-h-[72px]`}
+              aria-labelledby="spindd-remarks-label"
+              className={`${CONTROL} min-h-[72px]`}
               value={form.remarks}
               onChange={set("remarks")}
             />
-          </div>
+          </Field>
         </div>
       </div>
 
