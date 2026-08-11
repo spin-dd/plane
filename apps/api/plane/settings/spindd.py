@@ -19,6 +19,18 @@ import os
 from .production import *  # noqa
 
 # ---------------------------------------------------------------------------
+# 独自 Django アプリの登録
+# ---------------------------------------------------------------------------
+# INSTALLED_APPS と ROOT_URLCONF はどちらも設定値なので、ここで差し替えれば
+# plane/settings/common.py も plane/urls.py も改変せずに機能を追加できる。
+# spindd_ext は自前の migrations を持つため、plane.db の連番衝突も起きない。
+# アプリを plane パッケージの内側に置いているのは、apps/api/Dockerfile.api が
+# `COPY plane plane/` しかしないため。plane の外に置くとイメージに入らず、
+# この設定を有効にした本番イメージが ModuleNotFoundError で起動不能になる。
+INSTALLED_APPS = (*INSTALLED_APPS, "plane.spindd_ext")  # noqa: F405
+ROOT_URLCONF = "plane.spindd_ext.urls"
+
+# ---------------------------------------------------------------------------
 # 添付ファイル: 現場写真と図面を通せる MIME を追加する
 # ---------------------------------------------------------------------------
 # upstream の ATTACHMENT_MIME_TYPES は許可リスト方式（common.py:457）。

@@ -1060,6 +1060,9 @@ importers:
       '@plane/shared-state':
         specifier: workspace:*
         version: link:../../packages/shared-state
+      '@plane/spindd':
+        specifier: workspace:*
+        version: link:../../packages/spindd
       '@plane/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -1705,6 +1708,37 @@ importers:
       tsdown:
         specifier: 'catalog:'
         version: 0.16.0(oxc-resolver@11.20.0)(typescript@5.8.3)
+      typescript:
+        specifier: 5.8.3
+        version: 5.8.3
+
+  packages/spindd:
+    dependencies:
+      '@plane/constants':
+        specifier: workspace:*
+        version: link:../constants
+      '@react-router/dev':
+        specifier: 'catalog:'
+        version: 7.17.0(@react-router/serve@7.18.1(react-router@7.18.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.8.3))(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(react-router@7.18.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(terser@5.43.1)(tsx@4.20.6)(typescript@5.8.3)(vite@8.0.16(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3))(yaml@2.8.3)
+      axios:
+        specifier: 1.18.1
+        version: 1.18.1
+      react:
+        specifier: 'catalog:'
+        version: 18.3.1
+      react-router:
+        specifier: 'catalog:'
+        version: 7.18.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      swr:
+        specifier: 'catalog:'
+        version: 2.2.4(react@18.3.1)
+    devDependencies:
+      '@plane/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/react':
+        specifier: 'catalog:'
+        version: 18.3.11
       typescript:
         specifier: 5.8.3
         version: 5.8.3
@@ -6010,6 +6044,7 @@ packages:
 
   crypto-js@4.2.0:
     resolution: {integrity: sha512-KALDyEYgpY+Rlob/iriUtjV6d5Eq+Y191A5g4UqLAi8CyGP9N1+FdVbkc1SxKc2r4YAYqG8JzO2KGL+AizD70Q==}
+    deprecated: Active development of CryptoJS has been discontinued. This library is no longer maintained.
 
   css-loader@7.1.4:
     resolution: {integrity: sha512-vv3J9tlOl04WjiMvHQI/9tmIrCxVrj6PFbHemBB1iihpeRbi/I4h033eoFIhwxBBqLhI0KYFS7yvynBFhIZfTw==}
