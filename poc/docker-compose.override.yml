@@ -37,6 +37,21 @@ x-spindd-mount: &spindd-mount
   - type: bind
     source: ./apps/api/plane/spindd_ext
     target: /code/plane/spindd_ext
+  # fork が改変している upstream ファイル（優先度 5）。
+  # これを載せないと GUEST の可視範囲が upstream のまま（作成者のみ）になり、
+  # 協力会社に担当課題が見えない。CONTRIBUTING.spindd.md §3 の表と対応する。
+  - type: bind
+    source: ./apps/api/plane/app/views/issue/base.py
+    target: /code/plane/app/views/issue/base.py
+    read_only: true
+  - type: bind
+    source: ./apps/api/plane/app/views/issue/comment.py
+    target: /code/plane/app/views/issue/comment.py
+    read_only: true
+  - type: bind
+    source: ./apps/api/plane/app/views/issue/version.py
+    target: /code/plane/app/views/issue/version.py
+    read_only: true
 
 services:
   api:
