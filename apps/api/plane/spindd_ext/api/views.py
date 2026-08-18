@@ -14,9 +14,11 @@ from rest_framework.response import Response
 
 from plane.app.permissions import WorkspaceEntityPermission
 from plane.app.views.base import BaseViewSet
-from plane.db.models import Project, ProjectMember
+from plane.db.models import Project, ProjectMember, WorkspaceMember
+from plane.db.models.project import ROLE
 from plane.spindd_ext.api.serializers import ConstructionProjectSerializer
 from plane.spindd_ext.models import ConstructionProject
+from plane.spindd_ext.permissions import ConstructionProjectPermission
 
 # 台帳は 1 レスポンスで返す前提の画面だが、無制限だと現場数に比例して
 # レスポンスが膨らむ。既定で上限を設け、超えた分は truncated で明示する。
@@ -33,7 +35,8 @@ class ConstructionProjectViewSet(BaseViewSet):
 
     model = ConstructionProject
     serializer_class = ConstructionProjectSerializer
-    permission_classes = [WorkspaceEntityPermission]
+    # 請負金額を含むため、書き込みは現場 ADMIN / ワークスペース ADMIN に絞る。
+    permission_classes = [ConstructionProjectPermission]
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -71,6 +74,30 @@ class ConstructionProjectViewSet(BaseViewSet):
         rows = ConstructionProjectSerializer(queryset[:limit], many=True).data
         return Response({"count": total, "truncated": total > limit, "results": rows})
 
+    def _editable_project_ids(self, slug):
+        """このユーザーが工事情報を編集できる現場の id。
+
+        フロントが編集 UI を出すかどうかの判断に使う。権限そのものは
+        `ConstructionProjectPermission` がサーバ側で強制する。
+        """
+        if WorkspaceMember.objects.filter(
+            workspace__slug=slug,
+            member=self.request.user,
+            role=ROLE.ADMIN.value,
+            is_active=True,
+        ).exists():
+            return "all"
+
+        return [
+            str(pid)
+            for pid in ProjectMember.objects.filter(
+                workspace__slug=slug,
+                member=self.request.user,
+                role=ROLE.ADMIN.value,
+                is_active=True,
+            ).values_list("project_id", flat=True)
+        ]
+
     def ledger(self, request, slug):
         """工事台帳（一覧）。集計値を添えて返す。
 
@@ -88,6 +115,7 @@ class ConstructionProjectViewSet(BaseViewSet):
                 "count": total,
                 "truncated": total > limit,
                 "total_contract_amount": total_amount,
+                "editable_project_ids": self._editable_project_ids(slug),
                 "results": rows,
             }
         )

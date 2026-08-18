@@ -6,11 +6,13 @@
  * spin-dd fork addition (2026-08-10): this file does not exist upstream.
  */
 
+import { useState } from "react";
 import { useParams } from "react-router";
 import useSWR from "swr";
 import { API_BASE_URL } from "@plane/constants";
+import { ConstructionForm } from "../components/construction-form";
 import { ConstructionService } from "../services/construction.service";
-import type { TConstructionProject } from "../services/construction.service";
+import type { TConstructionProject, TConstructionProjectPayload } from "../services/construction.service";
 
 const constructionService = new ConstructionService(API_BASE_URL);
 
@@ -27,17 +29,26 @@ const period = (row: TConstructionProject) => {
 /**
  * 工事台帳。
  *
- * Plane の現場（Project）に紐づく工事情報を一覧する独自ページ。
+ * Plane の現場（Project）に紐づく工事情報を一覧・登録・編集する独自ページ。
  * 既存画面に差し込むのではなく独立ページにしているのは、`extendedRoutes` の
  * 継ぎ目に素直に乗せて upstream 追従のコンフリクトを避けるためである
  * （CONTRIBUTING.spindd.md §3）。
  */
 export default function ConstructionLedgerPage() {
   const { workspaceSlug } = useParams();
+  const slug = workspaceSlug?.toString();
 
-  const { data, error, isLoading } = useSWR(
-    workspaceSlug ? `SPINDD_CONSTRUCTION_LEDGER_${workspaceSlug}` : null,
-    workspaceSlug ? () => constructionService.ledger(workspaceSlug.toString()) : null,
+  const [editing, setEditing] = useState<TConstructionProject | "new" | null>(null);
+
+  const ledgerKey = slug ? `SPINDD_CONSTRUCTION_LEDGER_${slug}` : null;
+  const { data, error, isLoading, mutate } = useSWR(ledgerKey, slug ? () => constructionService.ledger(slug) : null, {
+    revalidateOnFocus: false,
+  });
+
+  // 未登録の現場は「登録」を開くときにしか使わないので、それまで取りに行かない。
+  const { data: unregistered, mutate: mutateUnregistered } = useSWR(
+    slug && editing !== null ? `SPINDD_CONSTRUCTION_UNREGISTERED_${slug}` : null,
+    slug ? () => constructionService.unregisteredProjects(slug) : null,
     { revalidateOnFocus: false }
   );
 
@@ -62,22 +73,51 @@ export default function ConstructionLedgerPage() {
   }
 
   const rows = data?.results ?? [];
+  const editableIds = data?.editable_project_ids ?? [];
+  // 権限はサーバ側が強制する。ここは UI の出し分けだけ。
+  const canEdit = (row: TConstructionProject) => editableIds === "all" || editableIds.includes(row.project);
+  const canCreate = editableIds === "all" || editableIds.length > 0;
+
+  const handleSubmit = async (payload: TConstructionProjectPayload) => {
+    if (!slug) return;
+    if (editing === "new") {
+      await constructionService.create(slug, payload);
+    } else if (editing) {
+      await constructionService.update(slug, editing.id, payload);
+    }
+    setEditing(null);
+    await Promise.all([mutate(), mutateUnregistered()]);
+  };
 
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
-      <div className="flex flex-shrink-0 items-baseline justify-between border-b border-subtle px-6 py-4">
+      <div className="flex flex-shrink-0 items-baseline justify-between gap-4 border-b border-subtle px-6 py-4">
         <h1 className="text-16 font-semibold text-primary">工事台帳</h1>
-        <p className="text-13 text-tertiary">
-          {data?.count ?? 0} 件{data?.truncated ? `（${rows.length} 件を表示）` : ""} / 請負金額合計{" "}
-          {yen(data?.total_contract_amount ?? 0)}
-        </p>
+        <div className="flex items-center gap-3">
+          <p className="text-13 text-tertiary">
+            {data?.count ?? 0} 件{data?.truncated ? `（${rows.length} 件を表示）` : ""} / 請負金額合計{" "}
+            {yen(data?.total_contract_amount ?? 0)}
+          </p>
+          {canCreate ? (
+            <button
+              type="button"
+              onClick={() => setEditing("new")}
+              className="rounded-md bg-layer-2 px-3 py-1.5 text-13 font-medium text-primary"
+            >
+              工事情報を登録
+            </button>
+          ) : null}
+        </div>
       </div>
 
       {rows.length === 0 ? (
-        <div className="p-6 text-13 text-tertiary">工事情報が登録されている現場がありません。</div>
+        <div className="p-6 text-13 text-tertiary">
+          工事情報が登録されている現場がありません。
+          {canCreate ? "「工事情報を登録」から追加してください。" : ""}
+        </div>
       ) : (
         <div className="flex-grow overflow-auto">
-          <table className="w-full min-w-[1100px] border-collapse text-13">
+          <table className="w-full min-w-[1180px] border-collapse text-13">
             <thead className="sticky top-0 bg-layer-1">
               <tr className="text-left text-tertiary">
                 <th className="px-4 py-2 font-medium whitespace-nowrap">工事番号</th>
@@ -90,6 +130,8 @@ export default function ConstructionLedgerPage() {
                 <th className="px-4 py-2 font-medium whitespace-nowrap">工期</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">現場代理人</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">状態</th>
+                {/* 空の th はスクリーンリーダーに名前が無い列として読まれるため、見出しを持たせる */}
+                <th className="px-4 py-2 font-medium whitespace-nowrap">操作</th>
               </tr>
             </thead>
             <tbody>
@@ -115,12 +157,36 @@ export default function ConstructionLedgerPage() {
                       <span className="rounded-full bg-layer-2 px-2 py-0.5 text-11 text-secondary">施工中</span>
                     )}
                   </td>
+                  <td className="px-4 py-2 text-right whitespace-nowrap">
+                    {canEdit(row) ? (
+                      <button
+                        type="button"
+                        onClick={() => setEditing(row)}
+                        className="text-11 text-tertiary underline underline-offset-2"
+                      >
+                        編集
+                      </button>
+                    ) : null}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       )}
+
+      {editing !== null ? (
+        <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/40 p-4">
+          <div className="shadow-lg w-full max-w-3xl rounded-lg bg-surface-1">
+            <ConstructionForm
+              initial={editing === "new" ? undefined : editing}
+              unregistered={unregistered?.results ?? []}
+              onSubmit={handleSubmit}
+              onCancel={() => setEditing(null)}
+            />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

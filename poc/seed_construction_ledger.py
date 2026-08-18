@@ -135,6 +135,27 @@ LEDGER = [
             "remarks": "既存倉庫の稼働を止めずに施工。夜間作業あり。",
         },
     },
+    {
+        "identifier": "OMYA",
+        "name": "26-D-0055 大宮駅東口ホテル新築工事",
+        "info": {
+            "contract_number": "26-D-0055",
+            "official_name": "（仮称）大宮駅東口ホテル新築工事",
+            "client_name": "埼玉ホテルマネジメント株式会社",
+            "site_address": "埼玉県さいたま市大宮区",
+            "building_use": "ホテル",
+            "structure": "RC造 地上14階",
+            "total_floor_area": Decimal("11200.00"),
+            "contract_type": ConstructionProject.ContractType.LUMP_SUM,
+            "contract_amount": 3_150_000_000,
+            "contract_date": date(2026, 7, 30),
+            "construction_start": date(2026, 9, 1),
+            "construction_end": date(2028, 3, 31),
+            "site_agent": "山田 太郎",
+            "chief_engineer": "佐藤 花子",
+            "remarks": "駅前狭小敷地。夜間搬入。",
+        },
+    },
 ]
 
 created = updated = 0
